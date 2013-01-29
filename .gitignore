@@ -4,3 +4,6 @@ Debug/*
 Release/*
 bin/*
 obj/*
+
+# Log files
+*.log
