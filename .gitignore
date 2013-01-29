@@ -1,0 +1,6 @@
+# Codeblocks files
+*.cbp
+
+# Compiled directories
+Debug/*
+Release/*
