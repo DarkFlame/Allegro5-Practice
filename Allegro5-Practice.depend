@@ -1,8 +1,8 @@
 # depslib dependency file v1.0
-1359420625 source:/home/jt/Coding/GitHub/Allegro5-Practice/main.cpp
+1360019372 source:/home/jt/Coding/GitHub/Allegro5-Practice/main.cpp
 	"allegro5/allegro.h"
 	"allegro5/allegro_image.h"
-	<allegro5/allegro_primitives.h>
+	"allegro5/allegro_primitives.h"
 	"allegro5/allegro_native_dialog.h"
 
 1359493943 source:c:\coding\allegro5-practice\main.cpp
