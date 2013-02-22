@@ -1,6 +1,7 @@
 # depslib dependency file v1.0
-1360780149 source:/home/jt/Coding/GitHub/Allegro5-Practice/main.cpp
+1361570558 source:/home/jt/Coding/GitHub/Allegro5-Practice/main.cpp
 	<stdio.h>
+	<cmath>
 	<allegro5/allegro.h>
 
 1359493943 source:c:\coding\allegro5-practice\main.cpp
