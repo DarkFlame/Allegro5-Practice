@@ -82,10 +82,13 @@ class Entity{
     float maxSpeed;
     float terminalSpeed;
     float jumpForce;
+    float wallJumpForce;
     int timeSinceJump;
     int maxJumpTime;
 
     bool grounded;
+    bool wallgrounded;
+    bool moved;
 
     void set_pos(int newx, int newy){pos.x = newx; pos.y = newy;}
     void set_pos(Vector2f newpos){pos=newpos;}
@@ -95,8 +98,8 @@ class Entity{
     };
     void init(ALLEGRO_DISPLAY *disp, const int x, const int y);
     int generate_bitmap();
-    void update(bool key[4]);
     void update(int mvkeys[2], bool key[4]);
+    void updatealt(int mvkeys[4], bool key[4]);
     void draw();
 };
 
@@ -113,10 +116,13 @@ void Entity::init(ALLEGRO_DISPLAY *disp, const int x, const int y){
     maxSpeed = 4.0f;
     terminalSpeed=6.5f;
     jumpForce=7.f;
+    wallJumpForce=14.f;
     timeSinceJump=0;
     maxJumpTime=20;
 
     grounded = false;
+    wallgrounded = false;
+    moved = true;
 
     //acceleration = Vector2f(maxSpeed,terminalSpeed); //disable acceleration
     acceleration = Vector2f(maxSpeed,0.5f); //disable acceleration with gravity
@@ -129,44 +135,68 @@ int Entity::generate_bitmap(){
     al_set_target_bitmap(al_get_backbuffer(display));
     return 0;
 };
-void Entity::update(bool key[4]){
-    if(key[KEY_LEFT]) {
-        targetSpeed.x = -maxSpeed;
-    }
-    else if(key[KEY_RIGHT]) {
+void Entity::update(int mvkeys[2], bool key[4]){
+    if (mvkeys[0] == ALLEGRO_KEY_RIGHT){
         targetSpeed.x = +maxSpeed;
+        moved = true;
     }
-    else{
-        targetSpeed.x=0;
+    else if (mvkeys[0] == ALLEGRO_KEY_LEFT){
+        targetSpeed.x = -maxSpeed;
+        moved = true;
     }
-
-    if (pos.y+SPRITE_H>=SCREEN_H){
-        targetSpeed.y = 0; // Touching the bottom. Collide
-        pos.y = SCREEN_H-SPRITE_H;
-        grounded = true;
-    }
-    else{
-        grounded = false;
-        if (!key[KEY_UP] || timeSinceJump >= maxJumpTime) {targetSpeed.y = terminalSpeed;}
-        else if (timeSinceJump < maxJumpTime) targetSpeed.y = 0;
+    else {
+        targetSpeed.x = 0;
+        moved = false;
     }
 
-    if(key[KEY_UP]) {
-        if (timeSinceJump < maxJumpTime){
-            curSpeed.y = -jumpForce;
-            targetSpeed.y = targetSpeed.y-terminalSpeed;
+    if ((curSpeed.x != 0) || (curSpeed.y != 0)){
+        if (pos.y+SPRITE_H>=SCREEN_H){
+            targetSpeed.y = 0; // Touching the bottom. Collide
+            curSpeed.y = 0;
+            pos.y = SCREEN_H-SPRITE_H;
+            timeSinceJump=0;
+            grounded = true;
         }
-        timeSinceJump++;
     }
-    else timeSinceJump=0;
 
-    /*if (y < SCREEN_H - SPRITE_H-3.0) {
-        y += gravity;
+    if (grounded){
+        if (key[KEY_UP]){
+            targetSpeed.y = -jumpForce; //If the jump button is pressed AND within jump time
+            curSpeed.y = -jumpForce;
+            timeSinceJump++;
+            grounded = false;
+        }
+        else {
+            targetSpeed.y = 0;
+            curSpeed.y = 0;
+            timeSinceJump = 0;
+        }
+    }
+    else{
+        if (!key[KEY_UP] || timeSinceJump >= maxJumpTime){
+            targetSpeed.y = terminalSpeed;
+        }
+        else {
+            timeSinceJump++;
+        }
+    }
+
+    /*if (wallgrounded && !grounded){
+        if (key[KEY_UP]){
+            curSpeed.y = -wallJumpForce;
+            curSpeed.x = wallJumpForce;
+            timeSinceJump++;
+            wallgrounded = false;
+            grounded = false;
+        }
+        else{
+            targetSpeed.y = targetSpeed.y/5;
+        }
     }*/
 
     Vector2f direction = Vector2f(sign(targetSpeed.x - curSpeed.x), sign(targetSpeed.y - curSpeed.y));
     //printf("direction: %f, %f\n", direction.x, direction.y);
-    //printf("targetSpeed: %f, %f\n", targetSpeed.x, targetSpeed.y);
+    printf("targetSpeed: %f, %f\n", targetSpeed.x, targetSpeed.y);
     //printf("acceleration: %f, %f\n", acceleration.x, acceleration.y);
     curSpeed += acceleration * direction;
     //printf("\nrawSpeed: %f, %f\n", curSpeed.x, curSpeed.y);
@@ -177,73 +207,59 @@ void Entity::update(bool key[4]){
         curSpeed.y = targetSpeed.y;
     /*if (fabs(curSpeed.x) > fabs(targetSpeed.x))curSpeed.x=targetSpeed.x;
     if (fabs(curSpeed.y) > fabs(targetSpeed.y))curSpeed.y=targetSpeed.y;*/
-    //printf("curSpeed: %f, %f\n\n", curSpeed.x, curSpeed.y);
+    printf("curSpeed: %f, %f\n\n", curSpeed.x, curSpeed.y);
 
     pos = pos + curSpeed;
+
+    if (pos.x <= 0){
+        targetSpeed.x = 0;
+        curSpeed.x = 0;
+        pos.x = 0;
+        //pos.y = pos.y - curSpeed.y/1.25;
+        wallgrounded = true;
+    }
+    else if (pos.x+SPRITE_W>=SCREEN_W){
+        targetSpeed.x = 0;
+        curSpeed.x = 0;
+        pos.x = SCREEN_W-SPRITE_W;
+        //pos.y = pos.y - curSpeed.y/1.25;
+        wallgrounded = true;
+    }
+    else wallgrounded = false;
 };
-void Entity::update(int mvkeys[2], bool key[4]){
+void Entity::updatealt(int mvkeys[4], bool key[4]){
+
+    //  Step X axis
     if (mvkeys[0] == ALLEGRO_KEY_RIGHT){
         targetSpeed.x = +maxSpeed;
     }
     else if (mvkeys[0] == ALLEGRO_KEY_LEFT){
         targetSpeed.x = -maxSpeed;
     }
-    else if (mvkeys[1] == ALLEGRO_KEY_RIGHT){
-        targetSpeed.x = +maxSpeed;
-    }
-    else if (mvkeys[1] == ALLEGRO_KEY_LEFT){
-        targetSpeed.x = -maxSpeed;
-    }
-    else targetSpeed.x = 0;
-
-    if (pos.y+SPRITE_H>=SCREEN_H){
-        targetSpeed.y = 0; // Touching the bottom. Collide
-        pos.y = SCREEN_H-SPRITE_H;
-        grounded = true;
-    }
     else{
-        grounded = false;
-        if (!key[KEY_UP] || timeSinceJump >= maxJumpTime) {targetSpeed.y = terminalSpeed;}
-        else if (timeSinceJump < maxJumpTime) targetSpeed.y = 0;
+        targetSpeed.x = 0;
     }
 
-    if(key[KEY_UP]) {
-        if (timeSinceJump < maxJumpTime){
-            curSpeed.y = -jumpForce;
-            targetSpeed.y = targetSpeed.y-terminalSpeed;
+    //  Step Y axis
+    if (grounded){
+        if (mvkeys[3] == 1){
+
         }
-        timeSinceJump++;
     }
-    else timeSinceJump=0;
 
-    /*if (y < SCREEN_H - SPRITE_H-3.0) {
-        y += gravity;
-    }*/
+    //  Collision
 
-    Vector2f direction = Vector2f(sign(targetSpeed.x - curSpeed.x), sign(targetSpeed.y - curSpeed.y));
-    //printf("direction: %f, %f\n", direction.x, direction.y);
-    //printf("targetSpeed: %f, %f\n", targetSpeed.x, targetSpeed.y);
-    //printf("acceleration: %f, %f\n", acceleration.x, acceleration.y);
-    curSpeed += acceleration * direction;
-    //printf("\nrawSpeed: %f, %f\n", curSpeed.x, curSpeed.y);
-    //curSpeed.x += acceleration.x * direction.x;
-    if (sign(targetSpeed.x - curSpeed.x) != direction.x)
-        curSpeed.x = targetSpeed.x;
-    if (sign(targetSpeed.y - curSpeed.y) != direction.y)
-        curSpeed.y = targetSpeed.y;
-    /*if (fabs(curSpeed.x) > fabs(targetSpeed.x))curSpeed.x=targetSpeed.x;
-    if (fabs(curSpeed.y) > fabs(targetSpeed.y))curSpeed.y=targetSpeed.y;*/
-    //printf("curSpeed: %f, %f\n\n", curSpeed.x, curSpeed.y);
+    //  Movement algorithm
 
-    pos = pos + curSpeed;
+    pos = pos;
+
 };
 void Entity::draw(){
     al_draw_bitmap(bitmap, pos.x, pos.y, 0);
 };
 
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv){
     ALLEGRO_DISPLAY *display = NULL;
     ALLEGRO_EVENT_QUEUE *event_queue = NULL;
     ALLEGRO_TIMER *timer = NULL;
@@ -315,7 +331,7 @@ int main(int argc, char **argv)
         //--Game Logic--//
         if(ev.type == ALLEGRO_EVENT_TIMER) {
             //player->update(key);
-            player->update(mvkeys, key);
+            player->updatealt(mvkeys, key);
 
             redraw = true;
           }
@@ -328,10 +344,12 @@ int main(int argc, char **argv)
             switch(ev.keyboard.keycode) {
                 case ALLEGRO_KEY_UP:
                     key[KEY_UP] = true;
+                    mvkeys[3] = 1;
                     break;
 
                 case ALLEGRO_KEY_DOWN:
                     key[KEY_DOWN] = true;
+                    mvkeys[4] = 1;
                     break;
 
                 case ALLEGRO_KEY_LEFT:
@@ -363,10 +381,12 @@ int main(int argc, char **argv)
             switch(ev.keyboard.keycode) {
                 case ALLEGRO_KEY_UP:
                     key[KEY_UP] = false;
+                    mvkeys[3] = 0;
                     break;
 
                 case ALLEGRO_KEY_DOWN:
                     key[KEY_DOWN] = false;
+                    mvkeys[4] = 0;
                     break;
 
                 case ALLEGRO_KEY_LEFT:
@@ -398,14 +418,14 @@ int main(int argc, char **argv)
             }
         }
 
-        printf("\n[%i, %i]\n\n", mvkeys[0], mvkeys[1]);
+        //printf("\n[%i, %i]\n\n", mvkeys[0], mvkeys[1]);
 
         //--The screen has updated and needs to be redrawn
         //--Draw Logic--//
         if(redraw && al_is_event_queue_empty(event_queue)) {
             redraw = false;
 
-            al_clear_to_color(al_map_rgb(0,0,0));
+            al_clear_to_color(al_map_rgb(50,50,50));
 
             player->draw();
 
