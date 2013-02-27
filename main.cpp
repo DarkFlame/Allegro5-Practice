@@ -70,7 +70,7 @@ class Vector2f{
 };
 
 class Entity{
-    public:
+public:
     int width;
     int height;
     Vector2f pos;
@@ -100,6 +100,7 @@ class Entity{
     };
     void init(ALLEGRO_DISPLAY *disp, const int x, const int y);
     int generate_bitmap();
+    void calculate_movement();
     void update(int mvkeys[2], bool key[4]);
     void updatealt(int mvkeys[4], bool key[4]);
     void draw();
@@ -113,22 +114,23 @@ void Entity::init(ALLEGRO_DISPLAY *disp, const int x, const int y){
     targetSpeed = Vector2f(0.0f,0.0f);
     curSpeed = Vector2f(0.0f,0.0f);
     direction = Vector2f(1.0f,1.0f);
-    //acceleration = Vector2f(0.65f,0.5f);
+    //acceleration = Vector2f(0.35f,0.5f);
 
     maxSpeed = 4.0f;
-    terminalSpeed=6.5f;
-    jumpForce=7.f;
-    wallJumpForce=14.f;
+    terminalSpeed=9.5f;
+    jumpForce=11.f;
+    wallJumpForce=6.f;
     timeSinceJump=0;
-    maxJumpTime=20;
+    maxJumpTime=10;
 
     grounded = false;
     wallgrounded = false;
     moved = true;
 
     //acceleration = Vector2f(maxSpeed,terminalSpeed); //disable acceleration
-    acceleration = Vector2f(maxSpeed,0.5f); //disable acceleration with gravity
+    acceleration = Vector2f(maxSpeed,0.75f); //disable acceleration with gravity
 };
+
 int Entity::generate_bitmap(){
     bitmap = al_create_bitmap(SPRITE_W, SPRITE_H);
     if (!bitmap) return -1;
@@ -137,7 +139,15 @@ int Entity::generate_bitmap(){
     al_set_target_bitmap(al_get_backbuffer(display));
     return 0;
 };
-void Entity::update(int mvkeys[2], bool key[4]){
+void Entity::calculate_movement(){
+    Vector2f direction = Vector2f(sign(targetSpeed.x - curSpeed.x), sign(targetSpeed.y - curSpeed.y));
+    curSpeed += acceleration * direction;
+    if (sign(targetSpeed.x - curSpeed.x) != direction.x)
+        curSpeed.x = targetSpeed.x;
+    if (sign(targetSpeed.y - curSpeed.y) != direction.y)
+        curSpeed.y = targetSpeed.y;
+}
+void Entity::updatealt(int mvkeys[2], bool key[4]){
     if (mvkeys[0] == ALLEGRO_KEY_RIGHT){
         targetSpeed.x = +maxSpeed;
         moved = true;
@@ -183,33 +193,7 @@ void Entity::update(int mvkeys[2], bool key[4]){
         }
     }
 
-    /*if (wallgrounded && !grounded){
-        if (key[KEY_UP]){
-            curSpeed.y = -wallJumpForce;
-            curSpeed.x = wallJumpForce;
-            timeSinceJump++;
-            wallgrounded = false;
-            grounded = false;
-        }
-        else{
-            targetSpeed.y = targetSpeed.y/5;
-        }
-    }*/
-
-    Vector2f direction = Vector2f(sign(targetSpeed.x - curSpeed.x), sign(targetSpeed.y - curSpeed.y));
-    //printf("direction: %f, %f\n", direction.x, direction.y);
-    printf("targetSpeed: %f, %f\n", targetSpeed.x, targetSpeed.y);
-    //printf("acceleration: %f, %f\n", acceleration.x, acceleration.y);
-    curSpeed += acceleration * direction;
-    //printf("\nrawSpeed: %f, %f\n", curSpeed.x, curSpeed.y);
-    //curSpeed.x += acceleration.x * direction.x;
-    if (sign(targetSpeed.x - curSpeed.x) != direction.x)
-        curSpeed.x = targetSpeed.x;
-    if (sign(targetSpeed.y - curSpeed.y) != direction.y)
-        curSpeed.y = targetSpeed.y;
-    /*if (fabs(curSpeed.x) > fabs(targetSpeed.x))curSpeed.x=targetSpeed.x;
-    if (fabs(curSpeed.y) > fabs(targetSpeed.y))curSpeed.y=targetSpeed.y;*/
-    printf("curSpeed: %f, %f\n\n", curSpeed.x, curSpeed.y);
+    calculate_movement();
 
     pos = pos + curSpeed;
 
@@ -229,7 +213,7 @@ void Entity::update(int mvkeys[2], bool key[4]){
     }
     else wallgrounded = false;
 };
-void Entity::updatealt(int mvkeys[4], bool key[4]){
+void Entity::update(int mvkeys[4], bool key[4]){
 
     //  Step X axis
     if (mvkeys[0] == ALLEGRO_KEY_RIGHT){
@@ -244,22 +228,74 @@ void Entity::updatealt(int mvkeys[4], bool key[4]){
 
     //  Step Y axis
     if (grounded){
+        timeSinceJump = 0;
         if (mvkeys[3] == 1){
-
+            // The player pushed the jump key.
+            curSpeed.y = -jumpForce;
+            targetSpeed.y = -jumpForce;
+            timeSinceJump++;
+            grounded = false;
+        }
+    }
+    else{
+        if (mvkeys[3] == 0 || timeSinceJump >= maxJumpTime){
+            // Either the timer ran out or the key was lifted.
+            targetSpeed.y = terminalSpeed;
+        }
+        else{
+            // Jump key is still down and timer not done.
+            timeSinceJump++;
+            targetSpeed.y = -jumpForce;
         }
     }
 
+    calculate_movement();
+
     //  Collision
+    // Collide with bottom pixel of screen.
+    if (pos.y + curSpeed.y >= SCREEN_H-SPRITE_H){
+        curSpeed.y = 0;
+        targetSpeed.y = 0;
+        pos.y = SCREEN_H-SPRITE_H;
+        grounded = true;
+    }
+    // Collide with edges of screen.
+    if (pos.x + curSpeed.x <= 0){
+        curSpeed.x = 0;
+        targetSpeed.x = 0;
+        pos.x = 0;
+    }
+    else if (pos.x+curSpeed.x >= SCREEN_W-SPRITE_W){
+        curSpeed.x = 0;
+        targetSpeed.x = 0;
+        pos.x = SCREEN_W-SPRITE_W;
+    }
 
-    //  Movement algorithm
-
-    pos = pos;
-
+    // Finally adjust position for drawing.
+    pos = pos + curSpeed;
 };
 void Entity::draw(){
     al_draw_bitmap(bitmap, pos.x, pos.y, 0);
 };
 
+class Camera{
+public:
+    Vector2f offset;
+    Vector2f view_size;
+};
+
+class TileMap{
+//--Map file basic structure
+//  Map             (version, orientation, width, height, tilewidth, tileheight)
+//      Tileset     (firstgid, name, tilewidth, tileheight)
+//          Image   (source, width, height)
+//      Layer       (name, width, height)
+//      Data        (encoding, compression)
+public:
+
+
+    void load_from_file();
+};
 
 int main(int argc, char **argv){
     ALLEGRO_DISPLAY *display = NULL;
@@ -332,8 +368,8 @@ int main(int argc, char **argv){
 
         //--Game Logic--//
         if(ev.type == ALLEGRO_EVENT_TIMER) {
-            //player->update(key);
-            player->updatealt(mvkeys, key);
+            player->update(mvkeys, key);
+            //player->updatealt(mvkeys, key);
 
             redraw = true;
           }
