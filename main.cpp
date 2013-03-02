@@ -4,13 +4,13 @@
 #include "tinyxml.h"
 #include "tinystr.h"
 
+#include "tmxloader.cpp"
+
 //--TODO
-//  Horizontal acceleration
-//  Independent vertical speed
-//   Jumping
-//   Jump force
-//   Variable jump height
+//  Map importing
+//  Map blitting
 //  Object collision
+//  Camera movement
 
 const float FPS = 60;
 const int SCREEN_W = 640;
@@ -241,6 +241,7 @@ void Entity::update(int mvkeys[4], bool key[4]){
         if (mvkeys[3] == 0 || timeSinceJump >= maxJumpTime){
             // Either the timer ran out or the key was lifted.
             targetSpeed.y = terminalSpeed;
+            timeSinceJump = maxJumpTime+1; // The key was lifted before the timer ended. Set it to the max jump time so they can't jump again until they land.
         }
         else{
             // Jump key is still down and timer not done.
@@ -284,18 +285,7 @@ public:
     Vector2f view_size;
 };
 
-class TileMap{
-//--Map file basic structure
-//  Map             (version, orientation, width, height, tilewidth, tileheight)
-//      Tileset     (firstgid, name, tilewidth, tileheight)
-//          Image   (source, width, height)
-//      Layer       (name, width, height)
-//      Data        (encoding, compression)
-public:
 
-
-    void load_from_file();
-};
 
 int main(int argc, char **argv){
     ALLEGRO_DISPLAY *display = NULL;
@@ -308,6 +298,9 @@ int main(int argc, char **argv){
     float sprite_y = SCREEN_H / 2.0 - SPRITE_H / 2.0;
     bool key[4] = { false, false, false, false };
     int mvkeys[2] = { NULL, NULL };
+
+    TileMap map;
+
     bool redraw = true;
     bool doexit = false;
 
@@ -341,6 +334,8 @@ int main(int argc, char **argv){
     //player.init(display,sprite_x,sprite_y);
     if (player->generate_bitmap() == -1) return -1;
     player->set_pos(SCREEN_W/2.0-SPRITE_W/2.0,SCREEN_H/2.0-SPRITE_H/2.0);
+
+    map.load_from_file("testmap32.tmx")
 
     event_queue = al_create_event_queue();
     if(!event_queue) {

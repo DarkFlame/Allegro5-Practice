@@ -136,6 +136,7 @@
 		<Unit filename="tinyxml.h" />
 		<Unit filename="tinyxmlerror.cpp" />
 		<Unit filename="tinyxmlparser.cpp" />
+		<Unit filename="tmxloader.cpp" />
 		<Extensions>
 			<code_completion />
 			<debugger />
