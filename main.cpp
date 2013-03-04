@@ -117,7 +117,7 @@ void Entity::init(ALLEGRO_DISPLAY *disp, const int x, const int y){
     //acceleration = Vector2f(0.35f,0.5f);
 
     maxSpeed = 4.0f;
-    terminalSpeed=9.5f;
+    terminalSpeed=10.5f;
     jumpForce=11.f;
     wallJumpForce=6.f;
     timeSinceJump=0;
@@ -128,7 +128,7 @@ void Entity::init(ALLEGRO_DISPLAY *disp, const int x, const int y){
     moved = true;
 
     //acceleration = Vector2f(maxSpeed,terminalSpeed); //disable acceleration
-    acceleration = Vector2f(maxSpeed,0.75f); //disable acceleration with gravity
+    acceleration = Vector2f(maxSpeed,0.85f); //disable acceleration with gravity
 };
 
 int Entity::generate_bitmap(){
@@ -335,7 +335,7 @@ int main(int argc, char **argv){
     if (player->generate_bitmap() == -1) return -1;
     player->set_pos(SCREEN_W/2.0-SPRITE_W/2.0,SCREEN_H/2.0-SPRITE_H/2.0);
 
-    map.load_from_file("testmap32.tmx")
+    map.load_from_file("testmap32.tmx");
 
     event_queue = al_create_event_queue();
     if(!event_queue) {

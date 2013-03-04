@@ -71,9 +71,16 @@ public:
     TiXmlDocument doc;
 
     // Reads the file in question into TinyXML DOM format
-    void load_from_file(const char filename){
-        TiXmlDocument doc(&filename);
+    void load_from_file(const char * filename){
+        TiXmlDocument doc(filename);
         doc.LoadFile();
         doc.Print();
+
+        TiXmlElement root = doc.FirstChildElement()[0];
+        TiXmlElement* tilesets = root.FirstChildElement("tileset");
+        for (int i=0;i <= sizeof(tilesets);i++){
+            printf("%s", tilesets[i].Value());
+        }
+        //printf("%s", tilesets.Value());
     }
 };
