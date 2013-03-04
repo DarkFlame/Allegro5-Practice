@@ -4,7 +4,6 @@
 #include "tinyxml.h"
 #include "tinystr.h"
 #include <list>
-#include <string>
 #include <map>
 #include <zlib.h>
 
@@ -22,13 +21,13 @@ class TileMap;
 
 class TileType{
 public:
-    std::map<std::string, std::string> properties;
+    std::map<char *, char *> properties;
     int id;
 };
 
 class TileSet{
 public:
-    std::string image_source; //Image filename to pull the tileset from.
+    char * image_source; //Image filename to pull the tileset from.
     ALLEGRO_BITMAP *image;
     int imgwidth;  //pixels
     int imgheight; //pixels
@@ -40,23 +39,21 @@ public:
     int tileoffsetx; //pixels
     int tileoffsety; //pixels
 
-    int tilewidth; //pixels
-    int tileheight;//pixels
-    int firstgid;  //the first tile id of this tileset. all following tiles will be ++
-    std::string name;
-
-    void load_from_file(std::string filename);
+    const int tilewidth; //pixels
+    const int tileheight;//pixels
+    const int firstgid;  //the first tile id of this tileset. all following tiles will be ++
+    const char * name;
 };
 
 class TileLayer{
 public:
-    std::string name;
+    char * name;
     int width; //tiles
     int height;//tiles
-    std::string compression; //either gzip or zlib.  If not set, no compression is used.
-    std::string encoding;    //either base64 or csv. If not set, no encoding is used, plain XML tags.
+    char * compression; //either gzip or zlib.  If not set, no compression is used.
+    char * encoding;    //either base64 or csv. If not set, no encoding is used, plain XML tags.
 
-    std::list<int> tiles;
+    int * tiles;
 };
 
 class TileMap{
@@ -66,6 +63,7 @@ public:
     int tilewidth; //pixels
     int tileheight;//pixels
     std::list<TileLayer> layers; //doubly-linked list
+    std::list<TileSet> tilesets; //doubly-linked list
     ALLEGRO_COLOR backgroundcolor; //not implemented.
 
     TiXmlDocument doc;
@@ -74,13 +72,19 @@ public:
     void load_from_file(const char * filename){
         TiXmlDocument doc(filename);
         doc.LoadFile();
-        doc.Print();
 
-        TiXmlElement root = doc.FirstChildElement()[0];
-        TiXmlElement* tilesets = root.FirstChildElement("tileset");
-        for (int i=0;i <= sizeof(tilesets);i++){
-            printf("%s", tilesets[i].Value());
+        TiXmlElement *root = doc.FirstChildElement();
+        TiXmlElement *r = root->FirstChildElement("tileset");
+        TileSet tempts = TileSet();
+        while (r != NULL){
+            // use strtol
+            tempts.firstgid = r->Attribute("firstgid")-'0';
+            tempts.name = r->Attribute("name");
+            tempts.tilewidth = r->Attribute("tilewidth")-'0';
+            tempts.tileheight = r->Attribute("tileheight")-'0';
+            printf("--Tileset--\n%s\n",r->Attribute("name"));
+
+            r = r->NextSiblingElement("tileset");
         }
-        //printf("%s", tilesets.Value());
     }
 };

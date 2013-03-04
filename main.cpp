@@ -373,7 +373,7 @@ int main(int argc, char **argv){
         }
         //--Store keypress info
         else if(ev.type == ALLEGRO_EVENT_KEY_DOWN) {
-            printf("\n\nKEYCODE: %i\n\n", ev.keyboard.keycode);
+            //printf("\n\nKEYCODE: %i\n\n", ev.keyboard.keycode);
             switch(ev.keyboard.keycode) {
                 case ALLEGRO_KEY_UP:
                     key[KEY_UP] = true;
