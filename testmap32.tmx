@@ -18,6 +18,9 @@
    </properties>
   </tile>
  </tileset>
+ <tileset firstgid="4" name="tileset" tilewidth="32" tileheight="32">
+  <image source="tileset.png" trans="ff00ff" width="128" height="128"/>
+ </tileset>
  <layer name="Tile Layer 1" width="20" height="15">
   <data encoding="csv">
 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
