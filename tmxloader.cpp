@@ -20,13 +20,15 @@ class TileSet;
 class TileLayer;
 class TileMap;
 
-class TileType{
+class TileType
+{
 public:
     std::map<char *, char *> properties;
     int id;
 };
 
-class TileSet{
+class TileSet
+{
 public:
     const char * image_source; //Image filename to pull the tileset from.
     ALLEGRO_BITMAP *image;
@@ -44,7 +46,8 @@ public:
     int tileheight;//pixels
     int firstgid;  //the first tile id of this tileset. all following tiles will be ++
     const char * name;
-    void parseXmlElement(TiXmlElement* element){
+    void parseXmlElement(TiXmlElement* element)
+    {
         firstgid = atoi(element->Attribute("firstgid"));
         name = element->Attribute("name");
         tilewidth = atoi(element->Attribute("tilewidth"));
@@ -58,13 +61,15 @@ public:
         if (transtmp)
             trans = al_color_html(transtmp);
     }
-    void print(){
+    void print()
+    {
         char * str = "------\ntileset '%s'\n\nfirst tile ID: %i\ntilesize: (%i,%i)\ntileoffset: (%i,%i)\nspacing:%i\nmargin:%i\n\nimage source: '%s'\nimage dimensions: (%i,%i)\n------\n";
         printf(str, name,firstgid,tilewidth,tileheight,tileoffsetx,tileoffsety,spacing,margin, image_source,imgwidth,imgheight);
     }
 };
 
-class TileLayer{
+class TileLayer
+{
 public:
     char * name;
     int width; //tiles
@@ -72,10 +77,58 @@ public:
     char * compression; //either gzip or zlib.  If not set, no compression is used.
     char * encoding;    //either base64 or csv. If not set, no encoding is used, plain XML tags.
 
-    int * tiles; // Array of tile IDs
+    int ** tiles; // 2D Array of tile IDs
+    TileLayer(char * csvstring)
+    {
+        tiles = (int **)malloc(sizeof(int *) * width);
+        for (int x=0;x<=width;x++)
+        {
+            tiles[x] = (int *)malloc(sizeof(int) * height);
+        }
+
+        char idbuffer[32];
+        int bufslot = 0; // The index of idbuffer where the first null-termination lies
+        int strindex = 0;
+        for (int x=0;x<width;x++)
+        {
+            for (int y=0;y<height;y++)
+            {
+                while (csvstring[strindex]!=",") // NOT A COMMA, a digit in an ID.
+                {
+                    //TODO check for EOF
+                    idbuffer[bufslot] = csvstring[strindex];
+                    idbuffer[bufslot+1] = 0;
+                    bufslot++;
+                    strindex++;
+                }
+                tiles[x][y] = atoi(idbuffer);
+                idbuffer[0] = 0;
+                bufslot = 0;
+                strindex++;
+            }
+        }
+    }
+    /*
+    to size:
+    tiles = (int **)malloc(sizeof(int *) * width);
+    for (int x=0;x<=width;x++){
+        tiles[x] = (int *)malloc(sizeof(int) * height);
+    }
+
+    to access:
+    tile = tiles[x/tilewidth][y/tileheight]
+    CHECK TO MAKE SURE IN BOUNDS.
+
+    to destroy:
+    for (int x=0;x<width;x++){
+        free(tiles[x]);
+    }
+    free(tiles);
+    */
 };
 
-class TileMap{
+class TileMap
+{
 public:
     const char * filename;
     int width; //tiles
@@ -91,7 +144,8 @@ public:
     TiXmlDocument doc;
 
     // Reads the file in question into TinyXML DOM format
-    void load_from_file(const char * fname){
+    void load_from_file(const char * fname)
+    {
         filename = fname;
         TiXmlDocument doc(fname);
         doc.LoadFile();
@@ -108,29 +162,31 @@ public:
         TileSet *tempts;
 
         int numtilesets;
-        for (numtilesets=0;r!=NULL;numtilesets++){
+        for (numtilesets=0;r!=NULL;numtilesets++)
+        {
             r = r->NextSiblingElement("tileset");
         }
 
         TileSet * tilesets[numtilesets];
         r = root->FirstChildElement("tileset");
-        while (r != NULL){
+        while (r != NULL)
+        {
             numtilesets--;
             tempts = new TileSet;
             tempts->parseXmlElement(r);
             tilesets[numtilesets] = tempts;
-            printf("TILESETLOADED %s",tempts->name);
-            printf("\n\n%i\n\n",numtilesets);
             //tempts.print();
 
             r = r->NextSiblingElement("tileset");
         }
-        for (int i = 0;i<sizeof(tilesets)/sizeof(tilesets[0]);i++){
+        for (int i = 0;i<sizeof(tilesets)/sizeof(tilesets[0]);i++)
+        {
             tilesets[i]->print();
         }
     }
 
-    void print(){
+    void print()
+    {
         char * str = "------\nmap %s\n\ndimensions: (%i,%i) (tiles)\ntilesize: (%i,%i)\npixel dimensions: (%i,%i)\n%i layers\n%i tilesets\n------\n";
         //sizeof(array)/sizeof(array[0])
         printf(str, filename,width,height,tilewidth,tileheight,width*tilewidth,height*tileheight,sizeof(layers)/sizeof(layers[0]),sizeof(tilesets)/sizeof(tilesets[0]));

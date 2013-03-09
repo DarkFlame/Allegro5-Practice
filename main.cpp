@@ -17,59 +17,72 @@ const int SCREEN_W = 640;
 const int SCREEN_H = 480;
 const int SPRITE_W = 25;
 const int SPRITE_H = 52;
-enum MYKEYS {
+enum MYKEYS
+{
     KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT
 };
 
-int sign(int i){
+int sign(int i)
+{
     if (i>0) return +1;
     else if (i<0) return -1;
     else return 0;
 }
 
-class Vector2f{
+class Vector2f
+{
     public:
     float x;
     float y;
 
-    Vector2f(){
+    Vector2f()
+    {
         x = 0;
         y = 0;
     };
-    Vector2f(float nx, float ny){
+    Vector2f(float nx, float ny)
+    {
         x = nx;
         y = ny;
     };
 
-    Vector2f operator*(Vector2f param){
+    Vector2f operator*(Vector2f param)
+    {
         return Vector2f(x*param.x, y*param.y);
     };
-    Vector2f operator/(Vector2f param){
+    Vector2f operator/(Vector2f param)
+    {
         return Vector2f(x/param.x, y/param.y);
     };
-    Vector2f operator+(Vector2f param){
+    Vector2f operator+(Vector2f param)
+    {
         return Vector2f(x+param.x, y+param.y);
     };
-    Vector2f operator-(Vector2f param){
+    Vector2f operator-(Vector2f param)
+    {
         return Vector2f(x-param.x, y-param.y);
     };
-    void operator+=(Vector2f param){
+    void operator+=(Vector2f param)
+    {
         x = x + param.x;
         y = y + param.y;
     };
-    void operator-=(Vector2f param){
+    void operator-=(Vector2f param)
+    {
         x = x - param.x;
         y = y - param.y;
     };
 
-    float angle(Vector2f other){
+    float angle(Vector2f other)
+    {
         return atan2(x-other.x, y-other.y);
     };
     float length(){return sqrt(pow(x,2)+pow(y,2));};
     float lengthSquared(){return pow(x,2)+pow(y,2);};
 };
 
-class Entity{
+class Entity
+{
 public:
     int width;
     int height;
@@ -95,7 +108,8 @@ public:
     void set_pos(int newx, int newy){pos.x = newx; pos.y = newy;}
     void set_pos(Vector2f newpos){pos=newpos;}
 
-    ~Entity(){
+    ~Entity()
+    {
         al_destroy_bitmap(bitmap);
     };
     void init(ALLEGRO_DISPLAY *disp, const int x, const int y);
@@ -106,7 +120,8 @@ public:
     void draw();
 };
 
-void Entity::init(ALLEGRO_DISPLAY *disp, const int x, const int y){
+void Entity::init(ALLEGRO_DISPLAY *disp, const int x, const int y)
+{
     display = disp;
 
     pos = Vector2f(0.0f,0.0f);
@@ -131,7 +146,8 @@ void Entity::init(ALLEGRO_DISPLAY *disp, const int x, const int y){
     acceleration = Vector2f(maxSpeed,0.85f); //disable acceleration with gravity
 };
 
-int Entity::generate_bitmap(){
+int Entity::generate_bitmap()
+{
     bitmap = al_create_bitmap(SPRITE_W, SPRITE_H);
     if (!bitmap) return -1;
     al_set_target_bitmap(bitmap);
@@ -139,7 +155,8 @@ int Entity::generate_bitmap(){
     al_set_target_bitmap(al_get_backbuffer(display));
     return 0;
 };
-void Entity::calculate_movement(){
+void Entity::calculate_movement()
+{
     Vector2f direction = Vector2f(sign(targetSpeed.x - curSpeed.x), sign(targetSpeed.y - curSpeed.y));
     curSpeed += acceleration * direction;
     if (sign(targetSpeed.x - curSpeed.x) != direction.x)
@@ -147,21 +164,26 @@ void Entity::calculate_movement(){
     if (sign(targetSpeed.y - curSpeed.y) != direction.y)
         curSpeed.y = targetSpeed.y;
 }
-void Entity::updatealt(int mvkeys[2], bool key[4]){
-    if (mvkeys[0] == ALLEGRO_KEY_RIGHT){
+void Entity::updatealt(int mvkeys[2], bool key[4])
+{
+    if (mvkeys[0] == ALLEGRO_KEY_RIGHT)
+    {
         targetSpeed.x = +maxSpeed;
         moved = true;
     }
-    else if (mvkeys[0] == ALLEGRO_KEY_LEFT){
+    else if (mvkeys[0] == ALLEGRO_KEY_LEFT)
+    {
         targetSpeed.x = -maxSpeed;
         moved = true;
     }
-    else {
+    else
+    {
         targetSpeed.x = 0;
         moved = false;
     }
 
-    if ((curSpeed.x != 0) || (curSpeed.y != 0)){
+    if ((curSpeed.x != 0) || (curSpeed.y != 0))
+    {
         if (pos.y+SPRITE_H>=SCREEN_H){
             targetSpeed.y = 0; // Touching the bottom. Collide
             curSpeed.y = 0;
@@ -171,24 +193,29 @@ void Entity::updatealt(int mvkeys[2], bool key[4]){
         }
     }
 
-    if (grounded){
+    if (grounded)
+    {
         if (key[KEY_UP]){
             targetSpeed.y = -jumpForce; //If the jump button is pressed AND within jump time
             curSpeed.y = -jumpForce;
             timeSinceJump++;
             grounded = false;
         }
-        else {
+        else
+        {
             targetSpeed.y = 0;
             curSpeed.y = 0;
             timeSinceJump = 0;
         }
     }
-    else{
-        if (!key[KEY_UP] || timeSinceJump >= maxJumpTime){
+    else
+    {
+        if (!key[KEY_UP] || timeSinceJump >= maxJumpTime)
+        {
             targetSpeed.y = terminalSpeed;
         }
-        else {
+        else
+        {
             timeSinceJump++;
         }
     }
@@ -197,14 +224,16 @@ void Entity::updatealt(int mvkeys[2], bool key[4]){
 
     pos = pos + curSpeed;
 
-    if (pos.x <= 0){
+    if (pos.x <= 0)
+    {
         targetSpeed.x = 0;
         curSpeed.x = 0;
         pos.x = 0;
         //pos.y = pos.y - curSpeed.y/1.25;
         wallgrounded = true;
     }
-    else if (pos.x+SPRITE_W>=SCREEN_W){
+    else if (pos.x+SPRITE_W>=SCREEN_W)
+    {
         targetSpeed.x = 0;
         curSpeed.x = 0;
         pos.x = SCREEN_W-SPRITE_W;
@@ -213,23 +242,29 @@ void Entity::updatealt(int mvkeys[2], bool key[4]){
     }
     else wallgrounded = false;
 };
-void Entity::update(int mvkeys[4], bool key[4]){
+void Entity::update(int mvkeys[4], bool key[4])
+{
 
     //  Step X axis
-    if (mvkeys[0] == ALLEGRO_KEY_RIGHT){
+    if (mvkeys[0] == ALLEGRO_KEY_RIGHT)
+    {
         targetSpeed.x = +maxSpeed;
     }
-    else if (mvkeys[0] == ALLEGRO_KEY_LEFT){
+    else if (mvkeys[0] == ALLEGRO_KEY_LEFT)
+    {
         targetSpeed.x = -maxSpeed;
     }
-    else{
+    else
+    {
         targetSpeed.x = 0;
     }
 
     //  Step Y axis
-    if (grounded){
+    if (grounded)
+    {
         timeSinceJump = 0;
-        if (mvkeys[3] == 1){
+        if (mvkeys[3] == 1)
+        {
             // The player pushed the jump key.
             curSpeed.y = -jumpForce;
             targetSpeed.y = -jumpForce;
@@ -237,13 +272,16 @@ void Entity::update(int mvkeys[4], bool key[4]){
             grounded = false;
         }
     }
-    else{
-        if (mvkeys[3] == 0 || timeSinceJump >= maxJumpTime){
+    else
+    {
+        if (mvkeys[3] == 0 || timeSinceJump >= maxJumpTime)
+        {
             // Either the timer ran out or the key was lifted.
             targetSpeed.y = terminalSpeed;
             timeSinceJump = maxJumpTime+1; // The key was lifted before the timer ended. Set it to the max jump time so they can't jump again until they land.
         }
-        else{
+        else
+        {
             // Jump key is still down and timer not done.
             timeSinceJump++;
             targetSpeed.y = -jumpForce;
@@ -254,19 +292,22 @@ void Entity::update(int mvkeys[4], bool key[4]){
 
     //  Collision
     // Collide with bottom pixel of screen.
-    if (pos.y + curSpeed.y >= SCREEN_H-SPRITE_H){
+    if (pos.y + curSpeed.y >= SCREEN_H-SPRITE_H)
+    {
         curSpeed.y = 0;
         targetSpeed.y = 0;
         pos.y = SCREEN_H-SPRITE_H;
         grounded = true;
     }
     // Collide with edges of screen.
-    if (pos.x + curSpeed.x <= 0){
+    if (pos.x + curSpeed.x <= 0)
+    {
         curSpeed.x = 0;
         targetSpeed.x = 0;
         pos.x = 0;
     }
-    else if (pos.x+curSpeed.x >= SCREEN_W-SPRITE_W){
+    else if (pos.x+curSpeed.x >= SCREEN_W-SPRITE_W)
+    {
         curSpeed.x = 0;
         targetSpeed.x = 0;
         pos.x = SCREEN_W-SPRITE_W;
@@ -275,11 +316,13 @@ void Entity::update(int mvkeys[4], bool key[4]){
     // Finally adjust position for drawing.
     pos = pos + curSpeed;
 };
-void Entity::draw(){
+void Entity::draw()
+{
     al_draw_bitmap(bitmap, pos.x, pos.y, 0);
 };
 
-class Camera{
+class Camera
+{
 public:
     Vector2f offset;
     Vector2f view_size;
@@ -287,7 +330,8 @@ public:
 
 
 
-int main(int argc, char **argv){
+int main(int argc, char **argv)
+{
     ALLEGRO_DISPLAY *display = NULL;
     ALLEGRO_EVENT_QUEUE *event_queue = NULL;
     ALLEGRO_TIMER *timer = NULL;
@@ -304,12 +348,14 @@ int main(int argc, char **argv){
     bool redraw = true;
     bool doexit = false;
 
-    if(!al_init()) {
+    if(!al_init())
+    {
         fprintf(stderr, "failed to initialize allegro!\n");
         return -1;
     }
 
-    if(!al_install_keyboard()) {
+    if(!al_install_keyboard())
+    {
         fprintf(stderr, "failed to initialize the keyboard!\n");
         return -1;
     }
@@ -317,13 +363,15 @@ int main(int argc, char **argv){
     //--Calculate how long each frame should last in milliseconds, then create
     //  a timer which ticks at that interval
     timer = al_create_timer(1.0 / FPS);
-    if(!timer) {
+    if(!timer)
+    {
         fprintf(stderr, "failed to create timer!\n");
         return -1;
     }
 
     display = al_create_display(SCREEN_W, SCREEN_H);
-    if(!display) {
+    if(!display)
+    {
         fprintf(stderr, "failed to create display!\n");
         al_destroy_timer(timer);
         return -1;
@@ -338,7 +386,8 @@ int main(int argc, char **argv){
     map.load_from_file("testmap32.tmx");
 
     event_queue = al_create_event_queue();
-    if(!event_queue) {
+    if(!event_queue)
+    {
         fprintf(stderr, "failed to create event_queue!\n");
         delete player;
         al_destroy_display(display);
@@ -362,19 +411,23 @@ int main(int argc, char **argv){
         al_wait_for_event(event_queue, &ev);
 
         //--Game Logic--//
-        if(ev.type == ALLEGRO_EVENT_TIMER) {
+        if(ev.type == ALLEGRO_EVENT_TIMER)
+        {
             player->update(mvkeys, key);
             //player->updatealt(mvkeys, key);
 
             redraw = true;
           }
-        else if(ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
+        else if(ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
+        {
             break;
         }
         //--Store keypress info
-        else if(ev.type == ALLEGRO_EVENT_KEY_DOWN) {
+        else if(ev.type == ALLEGRO_EVENT_KEY_DOWN)
+        {
             //printf("\n\nKEYCODE: %i\n\n", ev.keyboard.keycode);
-            switch(ev.keyboard.keycode) {
+            switch(ev.keyboard.keycode)
+            {
                 case ALLEGRO_KEY_UP:
                     key[KEY_UP] = true;
                     mvkeys[3] = 1;
@@ -387,10 +440,12 @@ int main(int argc, char **argv){
 
                 case ALLEGRO_KEY_LEFT:
                     key[KEY_LEFT] = true;
-                    if (mvkeys[0] == NULL){
+                    if (mvkeys[0] == NULL)
+                    {
                         mvkeys[0] = ALLEGRO_KEY_LEFT;
                     }
-                    else{
+                    else
+                    {
                         //mvkeys[1] = ALLEGRO_KEY_LEFT;
                         mvkeys[1] = mvkeys[0];
                         mvkeys[0] = ALLEGRO_KEY_LEFT;
@@ -399,10 +454,12 @@ int main(int argc, char **argv){
 
                 case ALLEGRO_KEY_RIGHT:
                     key[KEY_RIGHT] = true;
-                    if (mvkeys[0] == NULL){
+                    if (mvkeys[0] == NULL)
+                    {
                         mvkeys[0] = ALLEGRO_KEY_RIGHT;
                     }
-                    else{
+                    else
+                    {
                         //mvkeys[1] = ALLEGRO_KEY_RIGHT;
                         mvkeys[1] = mvkeys[0];
                         mvkeys[0] = ALLEGRO_KEY_RIGHT;
@@ -410,8 +467,10 @@ int main(int argc, char **argv){
                     break;
             }
         }
-        else if(ev.type == ALLEGRO_EVENT_KEY_UP) {
-            switch(ev.keyboard.keycode) {
+        else if(ev.type == ALLEGRO_EVENT_KEY_UP)
+        {
+            switch(ev.keyboard.keycode)
+            {
                 case ALLEGRO_KEY_UP:
                     key[KEY_UP] = false;
                     mvkeys[3] = 0;
@@ -424,23 +483,27 @@ int main(int argc, char **argv){
 
                 case ALLEGRO_KEY_LEFT:
                     key[KEY_LEFT] = false;
-                    if (mvkeys[0] == ALLEGRO_KEY_LEFT){
+                    if (mvkeys[0] == ALLEGRO_KEY_LEFT)
+                    {
                         mvkeys[0] = mvkeys[1];
                         mvkeys[1] = NULL;
                     }
-                    else if (mvkeys[1] == ALLEGRO_KEY_LEFT){
+                    else if (mvkeys[1] == ALLEGRO_KEY_LEFT)
+                    {
                         mvkeys[1] = NULL;
                     }
                     break;
 
                 case ALLEGRO_KEY_RIGHT:
                     key[KEY_RIGHT] = false;
-                    if (mvkeys[0] == ALLEGRO_KEY_RIGHT){
+                    if (mvkeys[0] == ALLEGRO_KEY_RIGHT)
+                    {
                         mvkeys[0] = mvkeys[1];
                         mvkeys[1] = NULL;
 
                     }
-                    else if (mvkeys[1] == ALLEGRO_KEY_RIGHT){
+                    else if (mvkeys[1] == ALLEGRO_KEY_RIGHT)
+                    {
                         mvkeys[1] = NULL;
                     }
                     break;
@@ -455,7 +518,8 @@ int main(int argc, char **argv){
 
         //--The screen has updated and needs to be redrawn
         //--Draw Logic--//
-        if(redraw && al_is_event_queue_empty(event_queue)) {
+        if(redraw && al_is_event_queue_empty(event_queue))
+        {
             redraw = false;
 
             al_clear_to_color(al_map_rgb(50,50,50));
