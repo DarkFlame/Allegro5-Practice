@@ -96,39 +96,30 @@ public:
         compression = data->Attribute("compression");
         encoding = data->Attribute("encoding");
 
-        const char* csvstring;
-        csvstring = data->GetText();
-        printf("\nORIGINAL STRING\n'%s'\n\n",csvstring);
-        printf("''%i''",csvstring[50]);
+        printf("\nBeginning parse\n");
+        const char* csvstring = data->GetText();
         char idbuffer[32];
         int bufslot = 0; // The index of idbuffer where the first null-termination lies
         int strindex = 0;
-        for (int x=0;x<width;x++)
+        for (int y=0;y<height;y++)
         {
-            for (int y=0;y<height;y++)
+            for (int x=0;x<width;x++)
             {
-                printf("char: [%i]: %s", strindex,csvstring[strindex]);
-                while (!(&csvstring[strindex]==",")) // NOT A COMMA, a digit in an ID.
+                printf("\nNext tile: ");
+                while (csvstring[strindex]!=',')
                 {
-                    //TODO check for EOF
-                    /*printf("\n\nchecking for EOF\n");
-                    printf("%i\n",csvstring[strindex]);*/
-                    if (csvstring[strindex] == 0)
+                    if (csvstring[strindex] >= '0' && csvstring[strindex] <= '9')
                     {
-                        //printf("\nEOF\n");
-                        idbuffer[0] = 0;
-                        break;
+                        idbuffer[bufslot] = csvstring[strindex];
+                        idbuffer[bufslot+1] = 0;
+                        bufslot++;
                     }
-                    idbuffer[bufslot] = csvstring[strindex];
-                    idbuffer[bufslot+1] = 0;
-                    bufslot++;
+                    else if (strindex >= strlen(csvstring))
+                        break;
                     strindex++;
                 }
-                printf("%i\n",idbuffer[0]);
-                if (!(idbuffer[0] == 0))
-                {
-                    tiles[x][y] = atoi(idbuffer);
-                }
+                printf("ID %s",idbuffer);
+                tiles[x][y] = atoi(idbuffer);
                 idbuffer[0] = 0;
                 bufslot = 0;
                 strindex++;
@@ -146,18 +137,31 @@ public:
 
     void print()
     {
-        const char * str = "\n------\nTile Layer '%s'\ndimensions:(%i,%i)\n%s %s\n";
-        //printf(str, name,width,height,compression,encoding);
+        const char * str = "\n------\nTile Layer '%s'\ndimensions:(%i,%i)\n%s encoding, %s compression\n";
+        printf(str, name,width,height,encoding,compression);
+
+        printf("  ");
+        for (int x=0;x<width;x++)
+            printf("-");
+        printf("\n\n");
+
         int i=0;
-        printf("\n\nLAYERS: %i\n\n",5);
         for (int y=0;y<height;y++)
         {
+            printf("| ",y+1);
             for (int x=0;x<width;x++)
             {
-                printf("%i ",tiles[x][y]);
+                if (tiles[x][y] != 0)
+                    printf("%i",tiles[x][y]);
+                else
+                    printf(" ");
             }
-            printf("\n");
+            printf(" |\n");
         }
+        printf("\n  ");
+        for (int x=0;x<width;x++)
+            printf("-");
+        printf("\n");
     }
     /*
     to size:
@@ -228,51 +232,53 @@ public:
         //  Load tileset metadata
         TileSet *tsbuf;
 
-        int numtilesets;
+        int numtilesets=0;
         r = root->FirstChildElement("tileset");
-        for (numtilesets=1;r!=NULL;numtilesets++)
+        while (r!=NULL)
         {
             r = r->NextSiblingElement("tileset");
+            numtilesets++;
         }
 
-        TileSet * tilesets[numtilesets];
+        TileSet ** tilesets = (TileSet **)malloc(sizeof(TileSet *)*numtilesets);
         r = root->FirstChildElement("tileset");
-        while (r != NULL)
+        for (int i=0;r!=NULL&&i<=numtilesets;i++)
         {
-            numtilesets--;
             tsbuf = new TileSet;
             tsbuf->parseXmlElement(r);
-            tilesets[numtilesets] = tsbuf;
+            tilesets[i] = tsbuf;
             //tsbuf.print();
 
             r = r->NextSiblingElement("tileset");
+            printf("\nTilesets2");
         }
-        for (int i = 0;i<sizeof(tilesets)/sizeof(tilesets[0]);i++)
+        for (int i=0;i<numtilesets;i++)
         {
             tilesets[i]->print();
+            printf("\nPrinting tilesets");
         }
 
         //  Load Layer data
         TileLayer *tlbuf;
 
-        int numlayers;
+        int numlayers=0;
         r = root->FirstChildElement("layer");
-        for (numlayers=1;r!=NULL;numtilesets++)
+        while (r!=NULL)
         {
             r = r->NextSiblingElement("layer");
+            numlayers++;
         }
 
-        TileLayer * tilelayers[numlayers];
+        TileLayer ** tilelayers = (TileLayer **)malloc(sizeof(TileLayer *)*numlayers);
         r = root->FirstChildElement("layer");
-        while (r != NULL)
+        for (int i=0;r!=NULL&&i<=numlayers;i++)
         {
-            numlayers--;
             tlbuf = new TileLayer(r);
-            tilelayers[numlayers] = tlbuf;
+            tilelayers[i] = tlbuf;
 
             r = r->NextSiblingElement("layer");
         }
-        for (int i=0;i<sizeof(tilelayers)/sizeof(tilelayers[0]);i++)
+        for (int i=0;i<numlayers;i++)
         {
             tilelayers[i]->print();
         }
