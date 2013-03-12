@@ -46,6 +46,7 @@ public:
     int tileheight;//pixels
     int firstgid;  //the first tile id of this tileset. all following tiles will be ++
     const char * name;
+
     void parseXmlElement(TiXmlElement* element)
     {
         firstgid = atoi(element->Attribute("firstgid"));
@@ -71,21 +72,34 @@ public:
 class TileLayer
 {
 public:
-    char * name;
+    const char * name;
     int width; //tiles
     int height;//tiles
-    char * compression; //either gzip or zlib.  If not set, no compression is used.
-    char * encoding;    //either base64 or csv. If not set, no encoding is used, plain XML tags.
+    const char * compression; //either gzip or zlib.  If not set, no compression is used.
+    const char * encoding;    //either base64 or csv. If not set, no encoding is used, plain XML tags.
 
     int ** tiles; // 2D Array of tile IDs
-    TileLayer(char * csvstring)
+    //TileLayer(const char * csvstring)
+    TileLayer(TiXmlElement *elem)
     {
+        width = atoi(elem->Attribute("width"));
+        height = atoi(elem->Attribute("height"));
+        name = elem->Attribute("name");
+
         tiles = (int **)malloc(sizeof(int *) * width);
         for (int x=0;x<=width;x++)
         {
             tiles[x] = (int *)malloc(sizeof(int) * height);
         }
 
+        TiXmlElement *data = elem->FirstChildElement("data");
+        compression = data->Attribute("compression");
+        encoding = data->Attribute("encoding");
+
+        const char* csvstring;
+        csvstring = data->GetText();
+        printf("\nORIGINAL STRING\n'%s'\n\n",csvstring);
+        printf("''%i''",csvstring[50]);
         char idbuffer[32];
         int bufslot = 0; // The index of idbuffer where the first null-termination lies
         int strindex = 0;
@@ -93,19 +107,56 @@ public:
         {
             for (int y=0;y<height;y++)
             {
-                while (csvstring[strindex]!=",") // NOT A COMMA, a digit in an ID.
+                printf("char: [%i]: %s", strindex,csvstring[strindex]);
+                while (!(&csvstring[strindex]==",")) // NOT A COMMA, a digit in an ID.
                 {
                     //TODO check for EOF
+                    /*printf("\n\nchecking for EOF\n");
+                    printf("%i\n",csvstring[strindex]);*/
+                    if (csvstring[strindex] == 0)
+                    {
+                        //printf("\nEOF\n");
+                        idbuffer[0] = 0;
+                        break;
+                    }
                     idbuffer[bufslot] = csvstring[strindex];
                     idbuffer[bufslot+1] = 0;
                     bufslot++;
                     strindex++;
                 }
-                tiles[x][y] = atoi(idbuffer);
+                printf("%i\n",idbuffer[0]);
+                if (!(idbuffer[0] == 0))
+                {
+                    tiles[x][y] = atoi(idbuffer);
+                }
                 idbuffer[0] = 0;
                 bufslot = 0;
                 strindex++;
             }
+        }
+    }
+    ~TileLayer()
+    {
+        for (int x=0;x<width;x++)
+        {
+            free(tiles[x]);
+        }
+        free(tiles);
+    }
+
+    void print()
+    {
+        const char * str = "\n------\nTile Layer '%s'\ndimensions:(%i,%i)\n%s %s\n";
+        //printf(str, name,width,height,compression,encoding);
+        int i=0;
+        printf("\n\nLAYERS: %i\n\n",5);
+        for (int y=0;y<height;y++)
+        {
+            for (int x=0;x<width;x++)
+            {
+                printf("%i ",tiles[x][y]);
+            }
+            printf("\n");
         }
     }
     /*
@@ -143,6 +194,20 @@ public:
 
     TiXmlDocument doc;
 
+    ~TileMap()
+    {
+        for (int i=0;i<sizeof(layers)/sizeof(layers[0]);i++)
+        {
+            free(&layers[i]);
+        }
+        free(layers);
+        for (int i=0;i<sizeof(tilesets)/sizeof(tilesets[0]);i++)
+        {
+            free(&tilesets[i]);
+        }
+        free(tilesets);
+    }
+
     // Reads the file in question into TinyXML DOM format
     void load_from_file(const char * fname)
     {
@@ -150,6 +215,7 @@ public:
         TiXmlDocument doc(fname);
         doc.LoadFile();
 
+        //  Load map metadata
         TiXmlElement *root = doc.FirstChildElement();
         width = atoi(root->Attribute("width"));
         height = atoi(root->Attribute("height"));
@@ -159,10 +225,12 @@ public:
 
         print();
         printf("\n");
-        TileSet *tempts;
+        //  Load tileset metadata
+        TileSet *tsbuf;
 
         int numtilesets;
-        for (numtilesets=0;r!=NULL;numtilesets++)
+        r = root->FirstChildElement("tileset");
+        for (numtilesets=1;r!=NULL;numtilesets++)
         {
             r = r->NextSiblingElement("tileset");
         }
@@ -172,16 +240,41 @@ public:
         while (r != NULL)
         {
             numtilesets--;
-            tempts = new TileSet;
-            tempts->parseXmlElement(r);
-            tilesets[numtilesets] = tempts;
-            //tempts.print();
+            tsbuf = new TileSet;
+            tsbuf->parseXmlElement(r);
+            tilesets[numtilesets] = tsbuf;
+            //tsbuf.print();
 
             r = r->NextSiblingElement("tileset");
         }
         for (int i = 0;i<sizeof(tilesets)/sizeof(tilesets[0]);i++)
         {
             tilesets[i]->print();
+        }
+
+        //  Load Layer data
+        TileLayer *tlbuf;
+
+        int numlayers;
+        r = root->FirstChildElement("layer");
+        for (numlayers=1;r!=NULL;numtilesets++)
+        {
+            r = r->NextSiblingElement("layer");
+        }
+
+        TileLayer * tilelayers[numlayers];
+        r = root->FirstChildElement("layer");
+        while (r != NULL)
+        {
+            numlayers--;
+            tlbuf = new TileLayer(r);
+            tilelayers[numlayers] = tlbuf;
+
+            r = r->NextSiblingElement("layer");
+        }
+        for (int i=0;i<sizeof(tilelayers)/sizeof(tilelayers[0]);i++)
+        {
+            tilelayers[i]->print();
         }
     }
 
