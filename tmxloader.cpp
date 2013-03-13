@@ -1,11 +1,9 @@
 #include <stdio.h>
-#include <cmath>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_color.h>
 #include "tinyxml.h"
 #include "tinystr.h"
 #include <stdlib.h>
-#include <map>
 #include <zlib.h>
 
 //--Map file basic structure
@@ -15,17 +13,21 @@
 //      Layer       (name, width, height)
 //          Data    (encoding, compression)
 
-class TileType;
 class TileSet;
 class TileLayer;
 class TileMap;
 
-class TileType
+/*
+To find which tileset to get a tile from:
+int i=0;
+while (id_to_find > tilemap.tilesets[i]->firstgid)
 {
-public:
-    std::map<char *, char *> properties;
-    int id;
-};
+
+    i++;
+}
+i--;
+if (i<0) i=0;
+*/
 
 class TileSet
 {
@@ -34,7 +36,7 @@ public:
     ALLEGRO_BITMAP *image;
     int imgwidth;  //pixels
     int imgheight; //pixels
-    ALLEGRO_COLOR trans;
+    ALLEGRO_COLOR colorkey;
 
     int spacing; //pixels. Applies to the image
     int margin;  //pixels. Applies to the image
@@ -47,20 +49,25 @@ public:
     int firstgid;  //the first tile id of this tileset. all following tiles will be ++
     const char * name;
 
-    void parseXmlElement(TiXmlElement* element)
+    TileSet(TiXmlElement* element)
     {
-        firstgid = atoi(element->Attribute("firstgid"));
         name = element->Attribute("name");
-        tilewidth = atoi(element->Attribute("tilewidth"));
-        tileheight = atoi(element->Attribute("tileheight"));
+        element->Attribute("firstgid",      &firstgid);
+        element->Attribute("tilewidth",     &tilewidth);
+        element->Attribute("tileheight",    &tileheight);
+        element->Attribute("spacing",       &spacing);
+        element->Attribute("margin",        &margin);
+        element->Attribute("tileoffsetx",   &tileoffsetx);
+        element->Attribute("tileoffsety",   &tileoffsety);
 
         TiXmlElement * imageelem = element->FirstChildElement("image");
         image_source = imageelem->Attribute("source");
-        imgwidth = atoi(imageelem->Attribute("width"));
-        imgheight= atoi(imageelem->Attribute("height"));
-        const char * transtmp = imageelem->Attribute("trans");
-        if (transtmp)
-            trans = al_color_html(transtmp);
+        imageelem->Attribute("width",&imgwidth);
+        imageelem->Attribute("height", &imgheight);
+
+        const char * trans = imageelem->Attribute("trans");
+        if (trans)
+            colorkey = al_color_html(trans);
     }
     void print()
     {
@@ -82,8 +89,8 @@ public:
     //TileLayer(const char * csvstring)
     TileLayer(TiXmlElement *elem)
     {
-        width = atoi(elem->Attribute("width"));
-        height = atoi(elem->Attribute("height"));
+        elem->Attribute("width",    &width);
+        elem->Attribute("height",   &height);
         name = elem->Attribute("name");
 
         tiles = (int **)malloc(sizeof(int *) * width);
@@ -96,7 +103,6 @@ public:
         compression = data->Attribute("compression");
         encoding = data->Attribute("encoding");
 
-        printf("\nBeginning parse\n");
         const char* csvstring = data->GetText();
         char idbuffer[32];
         int bufslot = 0; // The index of idbuffer where the first null-termination lies
@@ -105,7 +111,6 @@ public:
         {
             for (int x=0;x<width;x++)
             {
-                printf("\nNext tile: ");
                 while (csvstring[strindex]!=',')
                 {
                     if (csvstring[strindex] >= '0' && csvstring[strindex] <= '9')
@@ -118,7 +123,6 @@ public:
                         break;
                     strindex++;
                 }
-                printf("ID %s",idbuffer);
                 tiles[x][y] = atoi(idbuffer);
                 idbuffer[0] = 0;
                 bufslot = 0;
@@ -186,17 +190,35 @@ class TileMap
 {
 public:
     const char * filename;
-    int width; //tiles
-    int height;//tiles
-    int tilewidth; //pixels
-    int tileheight;//pixels
-    //std::list<TileLayer> layers; //doubly-linked list
+    int width;      //tiles
+    int height;     //tiles
+    int tilewidth;  //pixels
+    int tileheight; //pixels
     TileLayer ** layers;
-    //std::list<TileSet> tilesets; //doubly-linked list
     TileSet ** tilesets;
     ALLEGRO_COLOR backgroundcolor; //not implemented.
 
     TiXmlDocument doc;
+
+    // Reads the file in question into TinyXML DOM format
+    TileMap(const char * fname)
+    {
+        filename = fname;
+        TiXmlDocument doc(fname);
+        doc.LoadFile();
+
+        //  Load map metadata
+        TiXmlElement *root = doc.FirstChildElement();
+        root->Attribute("width",        &width);
+        root->Attribute("height",       &height);
+        root->Attribute("tilewidth",    &tilewidth);
+        root->Attribute("tileheight",   &tileheight);
+
+        print();
+        printf("\n");
+        load_tilesets(root);
+        load_tilelayers(root);
+    }
 
     ~TileMap()
     {
@@ -212,24 +234,9 @@ public:
         free(tilesets);
     }
 
-    // Reads the file in question into TinyXML DOM format
-    void load_from_file(const char * fname)
+    void load_tilesets(TiXmlElement *root)
     {
-        filename = fname;
-        TiXmlDocument doc(fname);
-        doc.LoadFile();
-
-        //  Load map metadata
-        TiXmlElement *root = doc.FirstChildElement();
-        width = atoi(root->Attribute("width"));
-        height = atoi(root->Attribute("height"));
-        tilewidth = atoi(root->Attribute("tilewidth"));
-        tileheight= atoi(root->Attribute("tileheight"));
         TiXmlElement *r = root->FirstChildElement("tileset");
-
-        print();
-        printf("\n");
-        //  Load tileset metadata
         TileSet *tsbuf;
 
         int numtilesets=0;
@@ -244,8 +251,7 @@ public:
         r = root->FirstChildElement("tileset");
         for (int i=0;r!=NULL&&i<=numtilesets;i++)
         {
-            tsbuf = new TileSet;
-            tsbuf->parseXmlElement(r);
+            tsbuf = new TileSet(r);
             tilesets[i] = tsbuf;
             //tsbuf.print();
 
@@ -257,12 +263,14 @@ public:
             tilesets[i]->print();
             printf("\nPrinting tilesets");
         }
+    }
 
-        //  Load Layer data
+    void load_tilelayers(TiXmlElement *root)
+    {
         TileLayer *tlbuf;
 
         int numlayers=0;
-        r = root->FirstChildElement("layer");
+        TiXmlElement *r = root->FirstChildElement("layer");
         while (r!=NULL)
         {
             r = r->NextSiblingElement("layer");
