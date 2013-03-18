@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <cmath>
-#include <allegro5/allegro.h>
+#include "allegro5/allegro.h"
 #include "tinyxml.h"
 #include "tinystr.h"
 

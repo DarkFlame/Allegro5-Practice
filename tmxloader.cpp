@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <zlib.h>
 
+#include "Common.h"
+
 //--Map file basic structure
 //  Map             (version, orientation, width, height, tilewidth, tileheight)
 //      Tileset     (firstgid, name, tilewidth, tileheight)
@@ -79,7 +81,7 @@ public:
 class TileLayer
 {
 public:
-    const char * name;
+    char * name;
     int width; //tiles
     int height;//tiles
     const char * compression; //either gzip or zlib.  If not set, no compression is used.
@@ -91,7 +93,8 @@ public:
     {
         elem->Attribute("width",    &width);
         elem->Attribute("height",   &height);
-        name = elem->Attribute("name");
+        name = NULL;
+        ResetString(name, elem->Attribute("name"));
 
         tiles = (int **)malloc(sizeof(int *) * width);
         for (int x=0;x<=width;x++)
@@ -223,23 +226,29 @@ public:
 
     ~TileMap()
     {
+        fprintf(stderr, "\nDeleting doc\n");
         delete doc;
+        fprintf(stderr, "Deleting tilelayers\n");
         for (unsigned int i=0;i<numlayers;i++)
         {
+            fprintf(stderr, "   Deleting layer %i\n", i);
             delete tilelayers[i];
         }
+        fprintf(stderr, "Deleting layers array\n");
         free(tilelayers);
+        fprintf(stderr, "Deleting tilesets\n");
         for (unsigned int i=0;i<numtilesets;i++)
         {
+            fprintf(stderr, "   Deleting tileset %i\n", i);
             delete tilesets[i];
         }
+        fprintf(stderr, "Deleting tilesets array\n");
         free(tilesets);
     }
 
     void load_tilesets(TiXmlElement *root)
     {
         TiXmlElement *r = root->FirstChildElement("tileset");
-        TileSet *tsbuf;
 
         numtilesets=0;
         r = root->FirstChildElement("tileset");
@@ -249,21 +258,18 @@ public:
             numtilesets++;
         }
 
-        TileSet ** tilesets = (TileSet **)malloc(sizeof(TileSet *)*numtilesets);
+        tilesets = (TileSet **)malloc(sizeof(TileSet *)*numtilesets);
         r = root->FirstChildElement("tileset");
         for (int i=0;r!=NULL&&i<=numtilesets;i++)
         {
-            tsbuf = new TileSet(r);
-            tilesets[i] = tsbuf;
+            tilesets[i] = new TileSet(r);
             //tsbuf.print();
 
             r = r->NextSiblingElement("tileset");
-            printf("\nTilesets2");
         }
         for (int i=0;i<numtilesets;i++)
         {
             tilesets[i]->print();
-            printf("\nPrinting tilesets");
         }
     }
 
