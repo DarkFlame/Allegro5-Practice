@@ -91,25 +91,50 @@ public:
     //TileLayer(const char * csvstring)
     TileLayer(TiXmlElement *elem)
     {
+        fprintf(stderr, "Initializing layer object\n");
+        fprintf(stderr, "Getting attributes\n");
         elem->Attribute("width",    &width);
         elem->Attribute("height",   &height);
         name = NULL;
         ResetString(name, elem->Attribute("name"));
 
+        fprintf(stderr, "Allocating tiles array\n");
         tiles = (int **)malloc(sizeof(int *) * width);
-        for (int x=0;x<=width;x++)
+        fprintf(stderr, "Populating tiles array\n");
+        for (int x=0;x<width;x++)
         {
             tiles[x] = (int *)malloc(sizeof(int) * height);
         }
 
+        fprintf(stderr, "Calling parse_data()\n");
+        parse_data(elem);
+        fprintf(stderr, "TileLayer constructor successfully completed\n");
+        fprintf(stderr, "\n");
+    }
+    ~TileLayer()
+    {
+        fprintf(stderr, "       Deleting layer data\n");
+        for (int x=0;x<width;x++)
+        {
+            free(tiles[x]);
+        }
+        fprintf(stderr, "       Deleting layer data array\n");
+        free(tiles);
+    }
+
+    void parse_data(TiXmlElement *elem)
+    {
+        fprintf(stderr,"Creating data element object\n");
         TiXmlElement *data = elem->FirstChildElement("data");
         compression = data->Attribute("compression");
         encoding = data->Attribute("encoding");
 
+        fprintf(stderr, "Getting text for data\n");
         const char* csvstring = data->GetText();
         char idbuffer[32];
         int bufslot = 0; // The index of idbuffer where the first null-termination lies
         unsigned int strindex = 0;
+        fprintf(stderr, "Beginning to parse data\n");
         for (int y=0;y<height;y++)
         {
             for (int x=0;x<width;x++)
@@ -132,16 +157,7 @@ public:
                 strindex++;
             }
         }
-    }
-    ~TileLayer()
-    {
-        fprintf(stderr, "       Deleting layer data\n");
-        for (int x=0;x<width;x++)
-        {
-            free(tiles[x]);
-        }
-        fprintf(stderr, "       Deleting layer data array\n");
-        free(tiles);
+        fprintf(stderr, "Data successfully parsed\n");
     }
 
     void print()
@@ -232,6 +248,7 @@ public:
         load_tilesets(root);
         fprintf(stderr, "Loading layers with load_tilelayers()\n");
         load_tilelayers(root);
+        fprintf(stderr, "TileMap object constructor successfully completed\n");
         fprintf(stderr, "\n");
     }
 
@@ -281,7 +298,7 @@ public:
             fprintf(stderr, "   Creating new TileSet object\n");
             tilesets[i] = new TileSet(r);
 
-            fprintf(stderr, "   Checking for next tileset element\n");
+            fprintf(stderr, "   Checking for next tileset element\n\n");
             r = r->NextSiblingElement("tileset");
         }
         /*fprintf(stderr, "Printing tilesets\n");
@@ -315,7 +332,7 @@ public:
             fprintf(stderr, "   Creating new TileLayer object\n");
             tilelayers[i] = new TileLayer(r);
 
-            fprintf(stderr, "   Checking for next layer element\n");
+            fprintf(stderr, "   Checking for next layer element\n\n");
             r = r->NextSiblingElement("layer");
         }
         /*fprintf(stderr, "Printing layers\n");
