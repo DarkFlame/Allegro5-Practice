@@ -281,6 +281,7 @@ public:
             fprintf(stderr, "   Creating new TileSet object\n");
             tilesets[i] = new TileSet(r);
 
+            fprintf(stderr, "   Checking for next tileset element\n");
             r = r->NextSiblingElement("tileset");
         }
         /*fprintf(stderr, "Printing tilesets\n");
@@ -314,6 +315,7 @@ public:
             fprintf(stderr, "   Creating new TileLayer object\n");
             tilelayers[i] = new TileLayer(r);
 
+            fprintf(stderr, "   Checking for next layer element\n");
             r = r->NextSiblingElement("layer");
         }
         /*fprintf(stderr, "Printing layers\n");
