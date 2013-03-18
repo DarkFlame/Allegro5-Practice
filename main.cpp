@@ -341,7 +341,7 @@ int main(int argc, char **argv)
     float sprite_x = SCREEN_W / 2.0 - SPRITE_W / 2.0;
     float sprite_y = SCREEN_H / 2.0 - SPRITE_H / 2.0;
     bool key[4] = { false, false, false, false };
-    int mvkeys[2] = { NULL, NULL };
+    int mvkeys[2] = { 0, 0 };
 
     bool redraw = true;
     bool doexit = false;
@@ -381,7 +381,7 @@ int main(int argc, char **argv)
     if (player->generate_bitmap() == -1) return -1;
     player->set_pos(SCREEN_W/2.0-SPRITE_W/2.0,SCREEN_H/2.0-SPRITE_H/2.0);
 
-    //TileMap *map = new TileMap("testmap32.tmx");;
+    TileMap *map = new TileMap("testmap32.tmx");
 
     event_queue = al_create_event_queue();
     if(!event_queue)
@@ -438,7 +438,7 @@ int main(int argc, char **argv)
 
                 case ALLEGRO_KEY_LEFT:
                     key[KEY_LEFT] = true;
-                    if (mvkeys[0] == NULL)
+                    if (!mvkeys[0])
                     {
                         mvkeys[0] = ALLEGRO_KEY_LEFT;
                     }
@@ -452,7 +452,7 @@ int main(int argc, char **argv)
 
                 case ALLEGRO_KEY_RIGHT:
                     key[KEY_RIGHT] = true;
-                    if (mvkeys[0] == NULL)
+                    if (!mvkeys[0])
                     {
                         mvkeys[0] = ALLEGRO_KEY_RIGHT;
                     }
@@ -484,11 +484,11 @@ int main(int argc, char **argv)
                     if (mvkeys[0] == ALLEGRO_KEY_LEFT)
                     {
                         mvkeys[0] = mvkeys[1];
-                        mvkeys[1] = NULL;
+                        mvkeys[1] = 0;
                     }
                     else if (mvkeys[1] == ALLEGRO_KEY_LEFT)
                     {
-                        mvkeys[1] = NULL;
+                        mvkeys[1] = 0;
                     }
                     break;
 
@@ -497,12 +497,12 @@ int main(int argc, char **argv)
                     if (mvkeys[0] == ALLEGRO_KEY_RIGHT)
                     {
                         mvkeys[0] = mvkeys[1];
-                        mvkeys[1] = NULL;
+                        mvkeys[1] = 0;
 
                     }
                     else if (mvkeys[1] == ALLEGRO_KEY_RIGHT)
                     {
-                        mvkeys[1] = NULL;
+                        mvkeys[1] = 0;
                     }
                     break;
 
@@ -531,7 +531,7 @@ int main(int argc, char **argv)
     //--You could let Allegro do this automatically, but it's allegedly faster
     //  if you do it manually
     delete player;
-    //delete map;
+    delete map;
     al_destroy_timer(timer);
     al_destroy_display(display);
     al_destroy_event_queue(event_queue);

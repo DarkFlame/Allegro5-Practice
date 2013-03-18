@@ -71,7 +71,7 @@ public:
     }
     void print()
     {
-        char * str = "------\ntileset '%s'\n\nfirst tile ID: %i\ntilesize: (%i,%i)\ntileoffset: (%i,%i)\nspacing:%i\nmargin:%i\n\nimage source: '%s'\nimage dimensions: (%i,%i)\n------\n";
+        const char * str = "------\ntileset '%s'\n\nfirst tile ID: %i\ntilesize: (%i,%i)\ntileoffset: (%i,%i)\nspacing:%i\nmargin:%i\n\nimage source: '%s'\nimage dimensions: (%i,%i)\n------\n";
         printf(str, name,firstgid,tilewidth,tileheight,tileoffsetx,tileoffsety,spacing,margin, image_source,imgwidth,imgheight);
     }
 };
@@ -106,7 +106,7 @@ public:
         const char* csvstring = data->GetText();
         char idbuffer[32];
         int bufslot = 0; // The index of idbuffer where the first null-termination lies
-        int strindex = 0;
+        unsigned int strindex = 0;
         for (int y=0;y<height;y++)
         {
             for (int x=0;x<width;x++)
@@ -149,10 +149,9 @@ public:
             printf("-");
         printf("\n\n");
 
-        int i=0;
         for (int y=0;y<height;y++)
         {
-            printf("| ",y+1);
+            printf("| ");
             for (int x=0;x<width;x++)
             {
                 if (tiles[x][y] != 0)
@@ -195,7 +194,9 @@ public:
     int tilewidth;  //pixels
     int tileheight; //pixels
     TileLayer ** tilelayers;
+    int numlayers;
     TileSet ** tilesets;
+    int numtilesets;
     ALLEGRO_COLOR backgroundcolor; //not implemented.
 
     TiXmlDocument doc;
@@ -222,14 +223,14 @@ public:
 
     ~TileMap()
     {
-        for (int i=0;i<sizeof(tilelayers)/sizeof(tilelayers[0]);i++)
+        for (unsigned int i=0;i<numlayers;i++)
         {
-            free(&tilelayers[i]);
+            delete tilelayers[i];
         }
         free(tilelayers);
-        for (int i=0;i<sizeof(tilesets)/sizeof(tilesets[0]);i++)
+        for (unsigned int i=0;i<numtilesets;i++)
         {
-            free(&tilesets[i]);
+            delete tilesets[i];
         }
         free(tilesets);
     }
@@ -239,7 +240,7 @@ public:
         TiXmlElement *r = root->FirstChildElement("tileset");
         TileSet *tsbuf;
 
-        int numtilesets=0;
+        numtilesets=0;
         r = root->FirstChildElement("tileset");
         while (r!=NULL)
         {
@@ -269,7 +270,7 @@ public:
     {
         TileLayer *tlbuf;
 
-        int numlayers=0;
+        numlayers=0;
         TiXmlElement *r = root->FirstChildElement("layer");
         while (r!=NULL)
         {
@@ -294,8 +295,8 @@ public:
 
     void print()
     {
-        char * str = "------\nmap %s\n\ndimensions: (%i,%i) (tiles)\ntilesize: (%i,%i)\npixel dimensions: (%i,%i)\n%i layers\n%i tilesets\n------\n";
+        const char * str = "------\nmap %s\n\ndimensions: (%i,%i) (tiles)\ntilesize: (%i,%i)\npixel dimensions: (%i,%i)\n%i layers\n%i tilesets\n------\n";
         //sizeof(array)/sizeof(array[0])
-        printf(str, filename,width,height,tilewidth,tileheight,width*tilewidth,height*tileheight,sizeof(tilelayers)/sizeof(tilelayers[0]),sizeof(tilesets)/sizeof(tilesets[0]));
+        printf(str, filename,width,height,tilewidth,tileheight,width*tilewidth,height*tileheight,numlayers,numtilesets);
     }
 };
