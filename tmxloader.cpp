@@ -46,7 +46,7 @@ public:
 
     int tilewidth; //pixels
     int tileheight;//pixels
-    int firstgid;  //the first tile id of this tileset. all following tiles will be ++
+    int firstgid;  //the first tile id of this tileset. all following tiles will be incremented by 1
     const char * name;
 
     TileSet(TiXmlElement* element)
@@ -199,17 +199,17 @@ public:
     int numtilesets;
     ALLEGRO_COLOR backgroundcolor; //not implemented.
 
-    TiXmlDocument doc;
+    TiXmlDocument *doc;
 
     // Reads the file in question into TinyXML DOM format
     TileMap(const char * fname)
     {
         filename = fname;
-        TiXmlDocument doc(fname);
-        doc.LoadFile();
+        doc = new TiXmlDocument;
+        doc->LoadFile(filename);
 
         //  Load map metadata
-        TiXmlElement *root = doc.FirstChildElement();
+        TiXmlElement *root = doc->FirstChildElement();
         root->Attribute("width",        &width);
         root->Attribute("height",       &height);
         root->Attribute("tilewidth",    &tilewidth);
@@ -223,6 +223,7 @@ public:
 
     ~TileMap()
     {
+        delete doc;
         for (unsigned int i=0;i<numlayers;i++)
         {
             delete tilelayers[i];
