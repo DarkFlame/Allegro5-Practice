@@ -129,6 +129,8 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="Common.cc" />
+		<Unit filename="Common.h" />
 		<Unit filename="main.cpp" />
 		<Unit filename="tinystr.cpp" />
 		<Unit filename="tinystr.h" />

@@ -263,7 +263,6 @@ public:
         for (int i=0;r!=NULL&&i<=numtilesets;i++)
         {
             tilesets[i] = new TileSet(r);
-            //tsbuf.print();
 
             r = r->NextSiblingElement("tileset");
         }
