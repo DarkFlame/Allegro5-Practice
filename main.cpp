@@ -381,7 +381,7 @@ int main(int argc, char **argv)
     if (player->generate_bitmap() == -1) return -1;
     player->set_pos(SCREEN_W/2.0-SPRITE_W/2.0,SCREEN_H/2.0-SPRITE_H/2.0);
 
-    TileMap *map = new TileMap("testmap32.tmx");;
+    //TileMap *map = new TileMap("testmap32.tmx");;
 
     event_queue = al_create_event_queue();
     if(!event_queue)
@@ -531,7 +531,7 @@ int main(int argc, char **argv)
     //--You could let Allegro do this automatically, but it's allegedly faster
     //  if you do it manually
     delete player;
-    delete map;
+    //delete map;
     al_destroy_timer(timer);
     al_destroy_display(display);
     al_destroy_event_queue(event_queue);

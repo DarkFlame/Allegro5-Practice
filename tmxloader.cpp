@@ -194,7 +194,7 @@ public:
     int height;     //tiles
     int tilewidth;  //pixels
     int tileheight; //pixels
-    TileLayer ** layers;
+    TileLayer ** tilelayers;
     TileSet ** tilesets;
     ALLEGRO_COLOR backgroundcolor; //not implemented.
 
@@ -222,11 +222,11 @@ public:
 
     ~TileMap()
     {
-        for (int i=0;i<sizeof(layers)/sizeof(layers[0]);i++)
+        for (int i=0;i<sizeof(tilelayers)/sizeof(tilelayers[0]);i++)
         {
-            free(&layers[i]);
+            free(&tilelayers[i]);
         }
-        free(layers);
+        free(tilelayers);
         for (int i=0;i<sizeof(tilesets)/sizeof(tilesets[0]);i++)
         {
             free(&tilesets[i]);
@@ -277,7 +277,7 @@ public:
             numlayers++;
         }
 
-        TileLayer ** tilelayers = (TileLayer **)malloc(sizeof(TileLayer *)*numlayers);
+        tilelayers = (TileLayer **)malloc(sizeof(TileLayer *)*numlayers);
         r = root->FirstChildElement("layer");
         for (int i=0;r!=NULL&&i<=numlayers;i++)
         {
@@ -296,6 +296,6 @@ public:
     {
         char * str = "------\nmap %s\n\ndimensions: (%i,%i) (tiles)\ntilesize: (%i,%i)\npixel dimensions: (%i,%i)\n%i layers\n%i tilesets\n------\n";
         //sizeof(array)/sizeof(array[0])
-        printf(str, filename,width,height,tilewidth,tileheight,width*tilewidth,height*tileheight,sizeof(layers)/sizeof(layers[0]),sizeof(tilesets)/sizeof(tilesets[0]));
+        printf(str, filename,width,height,tilewidth,tileheight,width*tilewidth,height*tileheight,sizeof(tilelayers)/sizeof(tilelayers[0]),sizeof(tilesets)/sizeof(tilesets[0]));
     }
 };
