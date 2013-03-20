@@ -336,6 +336,8 @@ private:
     Camera camera;
     TileMap * maps[64]; //Static array. REALLOC IF NEEDED
     int total_maps;
+    TileSet * tilesets[256]; //Static array. REALLOC IF NEEDED
+    int total_tilesets;
     TileMap * active_map;
 
     void log(const char* instring, ...)
@@ -367,19 +369,29 @@ public:
         {
             maps[i] = NULL;
         }
+        for (int i=0;i<255;i++)
+        {
+            tilesets[i] = NULL;
+        }
+        total_maps = 0;
+        total_tilesets = 0;
         reset_camera();
     }
     ~MapManager()
     {
         //--Destroys all maps at the end of the program
-        for (int i=0;i<64;i++)
+        log("Destructor beginning");
+        for (int i=0;i<63;i++)
         {
-            if (maps[i])
+            if (maps[i] != NULL)
             {
+                log("Deleting map '%s'",maps[i]->filename);
                 delete maps[i];
             }
         }
-        delete maps;
+        /*log("Deleting maps array");
+        delete maps;*/
+        log("Destructor completed");
     }
 
     void reset_camera(int x=0, int y=0)
@@ -438,9 +450,56 @@ public:
         reset_camera();
     }
 
-    void draw(ALLEGRO_DISPLAY * target)
+    void draw()
     {
         //--Draws the active map to target
+        //--DRAWING THE TILESET FOR PLACEHOLDER
+        al_draw_bitmap(active_map->tilesets[0]->image,0,0,0);
+        //--For each layer in the current map
+        for (int layerindex=0;layerindex<active_map->numlayers;layerindex++)
+        {
+            log("Iterating over a layer");
+            //--For each row in the current layer on the current map
+            for (int y=0;y<active_map->tilelayers[layerindex]->height;y++)
+            {
+                log("Starting y iteration");
+                for (int x=0;x<active_map->tilelayers[layerindex]->width;x++)
+                {
+                    log("Starting x iteration");
+                    //--ID is active_map->tilelayers[layerindex]->tiles[x][y]
+                    TileLayer * tlbuf = active_map->tilelayers[layerindex];
+                    log("Got tilelayer %s",tlbuf->name);
+                    log("Getting tile at (%i,%i)",x,y);
+                    int id = tlbuf->tiles[x][y];
+                    log("Getting id for %i",id);
+                    TileSet * tsbuf = active_map->get_tileset_for_id(id);
+                    log("Got tileset %s",tsbuf->name);
+                    //--Get the location of the tile on the tileset image
+                    int toffset = active_map->tilelayers[layerindex]->tiles[x][y] - tsbuf->firstgid;
+                    log("toffset is %i",toffset);
+                    int sx,sy;
+                    //--Wrap toffset on the x
+                    if (toffset < tsbuf->imgwidth/tsbuf->tilewidth)
+                    {
+                        //--It's in the first row, this is easy.
+                        sx = toffset*tsbuf->tilewidth;
+                        sy = 0;
+                    }
+                    else
+                    {
+                        int times = 0;
+                        while (toffset > tsbuf->imgwidth/tsbuf->tilewidth)
+                        {
+                            toffset -= tsbuf->imgwidth/tsbuf->tilewidth;
+                            times++;
+                        }
+                        sx = toffset;
+                        sy = tsbuf->tileheight*times;
+                    }
+                    al_draw_bitmap_region(tsbuf->image, sx,sy, tsbuf->tilewidth,tsbuf->tileheight, x*active_map->tilewidth,y*active_map->tileheight, 0);
+                }
+            }
+        }
     }
     void update()
     {
@@ -469,6 +528,12 @@ int main(int argc, char **argv)
     if(!al_init())
     {
         fprintf(stderr, "failed to initialize allegro!\n");
+        return -1;
+    }
+
+    if(!al_init_image_addon())
+    {
+        fprintf(stderr, "failed to initialize image addon!\n");
         return -1;
     }
 
@@ -646,6 +711,7 @@ int main(int argc, char **argv)
             al_clear_to_color(al_map_rgb(50,50,50));
 
             player->draw();
+            mapmanager->draw();
 
             al_flip_display();
         }

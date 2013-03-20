@@ -9,7 +9,7 @@
  <tileset firstgid="66" name="moon" tilewidth="32" tileheight="32">
   <image source="../images/moon.png" trans="ff00ff" width="192" height="192"/>
  </tileset>
- <layer name="night bg" width="25" height="15" visible="0">
+ <layer name="night bg" width="25" height="15">
   <data encoding="csv">
 11,12,11,12,11,12,11,12,11,12,11,12,11,12,11,12,11,12,11,12,11,12,11,12,11,
 11,12,11,12,11,12,11,12,11,12,11,12,11,12,11,12,11,12,11,12,11,12,11,12,11,
@@ -47,7 +47,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <layer name="day bg" width="25" height="15" visible="0">
+ <layer name="day bg" width="25" height="15">
   <data encoding="csv">
 1,2,1,2,2,1,1,1,2,2,1,2,1,1,1,1,1,2,1,2,1,2,2,2,2,
 1,2,2,1,1,2,2,1,2,2,1,1,1,1,2,1,2,1,1,2,2,2,2,2,1,
@@ -66,7 +66,7 @@
 17,18,18,18,18,18,17,17,17,17,17,17,18,18,18,18,17,18,17,18,17,17,17,17,18
 </data>
  </layer>
- <layer name="clouds" width="25" height="15" visible="0">
+ <layer name="clouds" width="25" height="15">
   <data encoding="csv">
 0,0,0,52,53,54,0,0,0,0,0,0,0,45,46,47,0,0,0,0,0,0,0,0,0,
 32,33,34,0,0,0,0,0,0,0,0,0,0,52,53,54,0,0,0,45,46,47,0,0,31,
@@ -85,7 +85,7 @@
 0,0,0,45,46,47,0,0,0,0,0,0,0,38,39,40,41,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <layer name="midground" width="25" height="15" visible="0">
+ <layer name="midground" width="25" height="15">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,7,9,8,9,10,0,7,9,10,0,0,0,0,0,0,0,0,0,0,0,
@@ -104,7 +104,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <layer name="vines" width="25" height="15" visible="0">
+ <layer name="vines" width="25" height="15">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,21,0,0,0,0,0,21,0,0,0,0,0,0,0,0,0,0,0,

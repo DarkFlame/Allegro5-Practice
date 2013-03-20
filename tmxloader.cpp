@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_color.h>
+#include <allegro5/allegro_image.h>
 #include "tinyxml.h"
 #include "tinystr.h"
 #include <stdlib.h>
+#include <stdarg.h>
 #include <zlib.h>
 
 #include "Common.h"
@@ -15,6 +17,7 @@
 //      Layer       (name, width, height)
 //          Data    (encoding, compression)
 
+class TileSetImage;
 class TileSet;
 class TileLayer;
 class TileMap;
@@ -31,10 +34,27 @@ i--;
 if (i<0) i=0;
 */
 
+
 class TileSet
 {
+private:
+    void log(const char* instring, ...)
+    {
+        //--Logs instring to stderr with some default formatting
+        char buffer[256];
+
+        fprintf(stderr,"[TileSet] ");
+
+        va_list args;
+        va_start (args, instring);
+        vsprintf(buffer, instring, args);
+        fprintf(stderr,buffer);
+        va_end (args);
+        fprintf(stderr,"\n");
+    }
+
 public:
-    const char * image_source; //Image filename to pull the tileset from.
+    char image_source[256]; //Image filename to pull the tileset from.
     ALLEGRO_BITMAP *image;
     int imgwidth;  //pixels
     int imgheight; //pixels
@@ -53,6 +73,7 @@ public:
 
     TileSet(TiXmlElement* element)
     {
+        log("Setting values from attributes");
         name = element->Attribute("name");
         element->Attribute("firstgid",      &firstgid);
         element->Attribute("tilewidth",     &tilewidth);
@@ -62,14 +83,53 @@ public:
         element->Attribute("tileoffsetx",   &tileoffsetx);
         element->Attribute("tileoffsety",   &tileoffsety);
 
+        log("Getting image element");
         TiXmlElement * imageelem = element->FirstChildElement("image");
-        image_source = imageelem->Attribute("source");
+        //image_source = {0};
+        strncpy(image_source, trim_filename(imageelem->Attribute("source")),256);
+        log("Found image source: '%s'",image_source);
         imageelem->Attribute("width",&imgwidth);
         imageelem->Attribute("height", &imgheight);
 
         const char * trans = imageelem->Attribute("trans");
         if (trans)
             colorkey = al_color_html(trans);
+            log("Colorkey set");
+
+        load_image(image_source);
+    }
+    ~TileSet()
+    {
+        log( "Deleting TileSet");
+        //delete image;
+    }
+    char* trim_filename(const char * filename)
+    {
+        char fnamebuf[256] = {0};
+        char fnamecpy[256] = {0};
+        char * datastring = "data";
+        //--Remove the first two characters in filename
+        strncpy(fnamecpy,filename,256);
+        int i;
+        for (i=2;i<strlen(filename);i++)
+        {
+            fnamecpy[i-2] = filename[i];
+        }
+        strncpy(fnamebuf,datastring,10);
+        strncpy(&fnamebuf[strlen(datastring)],fnamecpy,256);
+        fnamebuf[strlen(fnamebuf)-2] = 0; // For some reason it duplicates the last two characters, so here's a hack for that. TODO
+        log("Altering filename from '%s' to '%s'",filename,fnamebuf);
+        return fnamebuf;
+    }
+    void load_image(const char * filename)
+    {
+        //--Load the image into *image
+        log("Loading tileset image '%s'",filename);
+        image = al_load_bitmap(filename);
+        if (image == NULL)
+        {
+            log("ERROR image file '%s' not found.",filename);
+        }
     }
     void print()
     {
@@ -80,6 +140,22 @@ public:
 
 class TileLayer
 {
+private:
+    void log(const char* instring, ...)
+    {
+        //--Logs instring to stderr with some default formatting
+        char buffer[256];
+
+        fprintf(stderr,"[TileLayer] ");
+
+        va_list args;
+        va_start (args, instring);
+        vsprintf(buffer, instring, args);
+        fprintf(stderr,buffer);
+        va_end (args);
+        fprintf(stderr,"\n");
+    }
+
 public:
     char * name;
     int width; //tiles
@@ -88,53 +164,54 @@ public:
     const char * encoding;    //either base64 or csv. If not set, no encoding is used, plain XML tags.
 
     int ** tiles; // 2D Array of tile IDs
+
     //TileLayer(const char * csvstring)
     TileLayer(TiXmlElement *elem)
     {
-        fprintf(stderr, "Initializing layer object\n");
-        fprintf(stderr, "Getting attributes\n");
+        log("Initializing layer object");
+        log( "Getting attributes");
         elem->Attribute("width",    &width);
         elem->Attribute("height",   &height);
         name = NULL;
         ResetString(name, elem->Attribute("name"));
 
-        fprintf(stderr, "Allocating tiles array\n");
+        log( "Allocating tiles array");
         tiles = (int **)malloc(sizeof(int *) * width);
-        fprintf(stderr, "Populating tiles array\n");
+        log( "Populating tiles array");
         for (int x=0;x<width;x++)
         {
             tiles[x] = (int *)malloc(sizeof(int) * height);
         }
 
-        fprintf(stderr, "Calling parse_data()\n");
+        log( "Calling parse_data()");
         parse_data(elem);
-        fprintf(stderr, "TileLayer constructor successfully completed\n");
-        fprintf(stderr, "\n");
+        log( "TileLayer constructor successfully completed");
+        log( "");
     }
     ~TileLayer()
     {
-        fprintf(stderr, "       Deleting layer data\n");
+        log("Deleting layer data");
         for (int x=0;x<width;x++)
         {
             free(tiles[x]);
         }
-        fprintf(stderr, "       Deleting layer data array\n");
+        log("Deleting layer data array");
         free(tiles);
     }
 
     void parse_data(TiXmlElement *elem)
     {
-        fprintf(stderr,"Creating data element object\n");
+        log("Creating data element object");
         TiXmlElement *data = elem->FirstChildElement("data");
         compression = data->Attribute("compression");
         encoding = data->Attribute("encoding");
 
-        fprintf(stderr, "Getting text for data\n");
+        log( "Getting text for data");
         const char* csvstring = data->GetText();
         char idbuffer[32];
         int bufslot = 0; // The index of idbuffer where the first null-termination lies
         unsigned int strindex = 0;
-        fprintf(stderr, "Beginning to parse data\n");
+        log( "Beginning to parse data");
         for (int y=0;y<height;y++)
         {
             for (int x=0;x<width;x++)
@@ -157,7 +234,7 @@ public:
                 strindex++;
             }
         }
-        fprintf(stderr, "Data successfully parsed\n");
+        log( "Data successfully parsed");
     }
 
     void print()
@@ -240,57 +317,56 @@ public:
     // Reads the file in question into TinyXML DOM format
     TileMap(const char * fname)
     {
-        fprintf(stderr, "Loading XML document '%s'\n", fname);
+        log("Loading XML document '%s'", fname);
         filename = fname;
         doc = new TiXmlDocument;
         doc->LoadFile(filename);
-        fprintf(stderr, "Loaded document into TinyXML\n");
+        log( "Loaded document into TinyXML");
 
         //  Load map metadata
-        fprintf(stderr, "Getting root element\n");
+        log( "Getting root element");
         TiXmlElement *root = doc->FirstChildElement();
-        fprintf(stderr, "Getting root attributes\n");
+        log( "Getting root attributes");
         root->Attribute("width",        &width);
         root->Attribute("height",       &height);
         root->Attribute("tilewidth",    &tilewidth);
         root->Attribute("tileheight",   &tileheight);
-        fprintf(stderr, "\n");
 
-        //fprintf(stderr, "Printing map\n");
+        //log( "Printing map");
         //print();
-        fprintf(stderr, "Loading tilesets with load_tilesets()\n");
+        log( "Loading tilesets with load_tilesets()");
         load_tilesets(root);
-        fprintf(stderr, "Loading layers with load_tilelayers()\n");
+        log( "Loading layers with load_tilelayers()");
         load_tilelayers(root);
-        fprintf(stderr, "TileMap object constructor successfully completed\n");
-        fprintf(stderr, "\n");
+        log( "TileMap object constructor successfully completed\n");
     }
 
     ~TileMap()
     {
-        fprintf(stderr, "\nDeleting doc\n");
+        log( "Deleting doc");
         delete doc;
-        fprintf(stderr, "Deleting tilelayers\n");
+        log( "Deleting tilelayers");
         for (int i=0;i<numlayers;i++)
         {
-            fprintf(stderr, "   Deleting layer %i\n", i);
+            log( "Deleting layer %i", i);
             delete tilelayers[i];
         }
-        fprintf(stderr, "Deleting layers array\n");
+        log( "Deleting layers array");
         free(tilelayers);
-        fprintf(stderr, "Deleting tilesets\n");
+        log( "Deleting tilesets");
         for (int i=0;i<numtilesets;i++)
         {
-            fprintf(stderr, "   Deleting tileset %i\n", i);
+            log( "Deleting tileset %i", i);
             delete tilesets[i];
         }
-        fprintf(stderr, "Deleting tilesets array\n");
+        log( "Deleting tilesets array");
         free(tilesets);
+        log("TileMap destructor complete.");
     }
 
     void load_tilesets(TiXmlElement *root)
     {
-        fprintf(stderr, "Getting first tileset element\n");
+        log( "Getting first tileset element");
         TiXmlElement *r = root->FirstChildElement("tileset");
 
         numtilesets=0;
@@ -299,75 +375,74 @@ public:
         {
             r = r->NextSiblingElement("tileset");
             numtilesets++;
-            fprintf(stderr, "Another tileset found. %i tilesets\n", numtilesets);
+            log( "Another tileset found. %i tilesets", numtilesets);
         }
 
-        fprintf(stderr, "Allocating tilesets array\n");
+        log( "Allocating tilesets array");
         tilesets = (TileSet **)malloc(sizeof(TileSet *)*numtilesets);
-        fprintf(stderr, "Finding first tileset element again\n");
+        log( "Finding first tileset element again");
         r = root->FirstChildElement("tileset");
-        fprintf(stderr, "Iterating over tilesets\n");
+        log( "Iterating over tilesets");
         for (int i=0;r!=NULL&&i<=numtilesets;i++)
         {
-            fprintf(stderr, "   Creating new TileSet object\n");
+            log( "Creating new TileSet object");
             tilesets[i] = new TileSet(r);
 
-            fprintf(stderr, "   Checking for next tileset element\n\n");
+            log( "Checking for next tileset element\n");
             r = r->NextSiblingElement("tileset");
         }
-        /*fprintf(stderr, "Printing tilesets\n");
+        /*log( "Printing tilesets");
         for (int i=0;i<numtilesets;i++)
         {
             tilesets[i]->print();
         }*/
-        fprintf(stderr, "load_tilesets() complete\n");
-        fprintf(stderr, "\n");
+        log( "load_tilesets() complete\n");
     }
 
     void load_tilelayers(TiXmlElement *root)
     {
         numlayers=0;
-        fprintf(stderr, "Getting first layer element\n");
+        log( "Getting first layer element");
         TiXmlElement *r = root->FirstChildElement("layer");
         while (r!=NULL)
         {
             r = r->NextSiblingElement("layer");
             numlayers++;
-            fprintf(stderr, "Another layer found. %i layers\n", numlayers);
+            log( "Another layer found. %i layers", numlayers);
         }
 
-        fprintf(stderr, "Allocating layers array\n");
+        log( "Allocating layers array");
         tilelayers = (TileLayer **)malloc(sizeof(TileLayer *)*numlayers);
-        fprintf(stderr, "Finding first layer element again\n");
+        log( "Finding first layer element again");
         r = root->FirstChildElement("layer");
-        fprintf(stderr, "Iterating over layers\n");
+        log( "Iterating over layers");
         for (int i=0;r!=NULL&&i<=numlayers;i++)
         {
-            fprintf(stderr, "   Creating new TileLayer object\n");
+            log( "Creating new TileLayer object");
             tilelayers[i] = new TileLayer(r);
 
-            fprintf(stderr, "   Checking for next layer element\n\n");
+            log( "Checking for next layer element\n");
             r = r->NextSiblingElement("layer");
         }
-        /*fprintf(stderr, "Printing layers\n");
+        /*log( "Printing layers");
         for (int i=0;i<numlayers;i++)
         {
             tilelayers[i]->print();
         }*/
-        fprintf(stderr, "load_tilelayers complete.\n");
-        fprintf(stderr, "\n");
+        log( "load_tilelayers complete.");
+        log( "\n");
     }
 
     TileSet * get_tileset_for_id(int id)
     {
-        fprintf(stderr, "\nSearching for tileset with tile ID %i\n", id);
+        //log( "Searching for tileset with tile ID %i", id);
         int i = 0;
         while (id > tilesets[i]->firstgid)
         {
             i++;
             if (i+1>numtilesets)
             {
-                fprintf(stderr, "Tile must be in the last tileset (Or past it)\n");
+                //log( "Tile must be in the last tileset (Or past it)");
                 break;
             }
         }
@@ -376,18 +451,18 @@ public:
         {
             i--;
         }
-        fprintf(stderr, "ID found for tileset candidate %i ('%s')\n",i,tilesets[i]->name);
+        //log( "ID found for tileset candidate %i ('%s')",i,tilesets[i]->name);
         //--Figure out the number of tiles in the candidate
         //--Do so by multiplying the width/tilewidth by the height/tileheight
         int tilesincandidate =
             (tilesets[i]->imgwidth/tilesets[i]->tilewidth)*(tilesets[i]->imgheight/tilesets[i]->tileheight);
-        fprintf(stderr,"There are %i tiles present in the candidate %i ('%s')\n",tilesincandidate,i,tilesets[i]->name);
+        //log("There are %i tiles present in the candidate %i ('%s')",tilesincandidate,i,tilesets[i]->name);
         if (id <= tilesincandidate+tilesets[i]->firstgid)
         {
-            fprintf(stderr, "Found tileset that matches ID %i: %s\n",id,tilesets[i]->name);
+            //log( "Found tileset that matches ID %i: %s",id,tilesets[i]->name);
             return tilesets[i];
         }
-        fprintf(stderr, "No tileset matches ID: %i. Returning NULL\n", id);
+        log( "No tileset matches ID: %i. Returning NULL", id);
         return NULL; // There is no such tileset.
     }
 
