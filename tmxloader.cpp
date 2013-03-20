@@ -222,6 +222,21 @@ public:
 
     TiXmlDocument *doc;
 
+    void log(const char* instring, ...)
+    {
+        //--Logs instring to stderr with some default formatting
+        char buffer[256];
+
+        fprintf(stderr,"[TileMap] ");
+
+        va_list args;
+        va_start (args, instring);
+        vsprintf(buffer, instring, args);
+        fprintf(stderr,buffer);
+        va_end (args);
+        fprintf(stderr,"\n");
+    }
+
     // Reads the file in question into TinyXML DOM format
     TileMap(const char * fname)
     {
@@ -256,7 +271,7 @@ public:
         fprintf(stderr, "\nDeleting doc\n");
         delete doc;
         fprintf(stderr, "Deleting tilelayers\n");
-        for (unsigned int i=0;i<numlayers;i++)
+        for (int i=0;i<numlayers;i++)
         {
             fprintf(stderr, "   Deleting layer %i\n", i);
             delete tilelayers[i];
@@ -264,7 +279,7 @@ public:
         fprintf(stderr, "Deleting layers array\n");
         free(tilelayers);
         fprintf(stderr, "Deleting tilesets\n");
-        for (unsigned int i=0;i<numtilesets;i++)
+        for (int i=0;i<numtilesets;i++)
         {
             fprintf(stderr, "   Deleting tileset %i\n", i);
             delete tilesets[i];

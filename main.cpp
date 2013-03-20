@@ -1,10 +1,13 @@
 #include <stdio.h>
+#include <stdarg.h>
 #include <cmath>
 #include "allegro5/allegro.h"
 #include "tinyxml.h"
 #include "tinystr.h"
 
 #include "tmxloader.cpp"
+
+#include "Common.h"
 
 //--TODO
 //  Map importing
@@ -322,24 +325,98 @@ void Entity::draw()
 };
 
 
+struct Camera
+{
+    int x,y;
+};
+
 class MapManager
 {
+private:
+    Camera camera;
+    TileMap * maps[64]; //Static array. REALLOC IF NEEDED
+    int total_maps;
+    char * active_map;
+
+    void log(const char* instring, ...)
+    {
+        //--Logs instring to stderr with some default formatting
+        char buffer[256];
+
+        fprintf(stderr,"[MapManager] ");
+
+        va_list args;
+        va_start (args, instring);
+        vsprintf(buffer, instring, args);
+        fprintf(stderr,buffer);
+        va_end (args);
+        fprintf(stderr,"\n");
+    }
+
 public:
     MapManager()
     {
-
+        //--Constructor
+        for (int i=0;i<63;i++)
+        {
+            maps[i] = NULL;
+        }
+        reset_camera();
     }
     ~MapManager()
     {
-
+        //--Destroys all maps at the end of the program
+        for (int i=0;i<64;i++)
+        {
+            if (maps[i])
+            {
+                delete maps[i];
+            }
+        }
+        delete maps;
     }
-    void add_map(TileMap* map_to_add)
+
+    void reset_camera(int x=0, int y=0)
     {
-
+        //--Resets the camera to position x,y
+        fprintf(stderr,"Reset the camera to ");
+        log("Reset the camera to (%i,%i)",x,y);
+        camera.x=x;
+        camera.y=y;
     }
+    void add_map(const char * filename)
+    {
+        //--Adds map_to_add to the maps to manage
+        maps[total_maps] = new TileMap(filename);
+        log("Added new map to Map Manager named '%'",maps[total_maps]->filename);
+        total_maps++;
+    }
+    void load_map(TileMap* map_to_load)
+    {
+        //--Loads the map's tilesets (If not already)
+    }
+    TileMap * get_map(const char * mapname)
+    {
+        //--Iterates over maps and returns the first TileMap with the name mapname
+        return maps[0];
+    }
+    void set_active_map(const char * mapname)
+    {
+        //--Switches maps to the map of name mapname
+        //active_map = mapname;
+        ResetString(active_map,mapname);
+        reset_camera();
+    }
+
     void draw(ALLEGRO_DISPLAY * target)
     {
-
+        //--Draws the active map to target
+    }
+    void update()
+    {
+        //--Possibly unneeded. Calls game logic for each map
+        //  might have another function for the manager itself such
+        //  as camera movement.
     }
 };
 
@@ -394,7 +471,9 @@ int main(int argc, char **argv)
     if (player->generate_bitmap() == -1) return -1;
     player->set_pos(SCREEN_W/2.0-SPRITE_W/2.0,SCREEN_H/2.0-SPRITE_H/2.0);
 
-    TileMap *testmap = new TileMap("data/levels/outside.tmx");
+    MapManager* mapmanager = new MapManager();
+    mapmanager->add_map("data/levels/outside.tmx");
+    //TileMap *testmap = new TileMap("data/levels/outside.tmx");
 
     event_queue = al_create_event_queue();
     if(!event_queue)
@@ -544,7 +623,8 @@ int main(int argc, char **argv)
     //--You could let Allegro do this automatically, but it's allegedly faster
     //  if you do it manually
     delete player;
-    delete testmap;
+    //delete testmap;
+    delete mapmanager;
     al_destroy_timer(timer);
     al_destroy_display(display);
     al_destroy_event_queue(event_queue);
