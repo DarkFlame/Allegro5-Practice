@@ -256,8 +256,8 @@ public:
         root->Attribute("tileheight",   &tileheight);
         fprintf(stderr, "\n");
 
-        fprintf(stderr, "Printing map\n");
-        print();
+        //fprintf(stderr, "Printing map\n");
+        //print();
         fprintf(stderr, "Loading tilesets with load_tilesets()\n");
         load_tilesets(root);
         fprintf(stderr, "Loading layers with load_tilelayers()\n");
@@ -315,11 +315,11 @@ public:
             fprintf(stderr, "   Checking for next tileset element\n\n");
             r = r->NextSiblingElement("tileset");
         }
-        fprintf(stderr, "Printing tilesets\n");
+        /*fprintf(stderr, "Printing tilesets\n");
         for (int i=0;i<numtilesets;i++)
         {
             tilesets[i]->print();
-        }
+        }*/
         fprintf(stderr, "load_tilesets() complete\n");
         fprintf(stderr, "\n");
     }
@@ -349,11 +349,11 @@ public:
             fprintf(stderr, "   Checking for next layer element\n\n");
             r = r->NextSiblingElement("layer");
         }
-        fprintf(stderr, "Printing layers\n");
+        /*fprintf(stderr, "Printing layers\n");
         for (int i=0;i<numlayers;i++)
         {
             tilelayers[i]->print();
-        }
+        }*/
         fprintf(stderr, "load_tilelayers complete.\n");
         fprintf(stderr, "\n");
     }

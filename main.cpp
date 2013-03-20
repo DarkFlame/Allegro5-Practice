@@ -336,7 +336,7 @@ private:
     Camera camera;
     TileMap * maps[64]; //Static array. REALLOC IF NEEDED
     int total_maps;
-    char * active_map;
+    TileMap * active_map;
 
     void log(const char* instring, ...)
     {
@@ -351,6 +351,12 @@ private:
         fprintf(stderr,buffer);
         va_end (args);
         fprintf(stderr,"\n");
+    }
+
+    void load_map(TileMap* map_to_load)
+    {
+        //--Loads the map's tilesets (If not already)
+        log("Loading map '%s'",map_to_load->filename);
     }
 
 public:
@@ -379,7 +385,6 @@ public:
     void reset_camera(int x=0, int y=0)
     {
         //--Resets the camera to position x,y
-        fprintf(stderr,"Reset the camera to ");
         log("Reset the camera to (%i,%i)",x,y);
         camera.x=x;
         camera.y=y;
@@ -388,23 +393,48 @@ public:
     {
         //--Adds map_to_add to the maps to manage
         maps[total_maps] = new TileMap(filename);
-        log("Added new map to Map Manager named '%'",maps[total_maps]->filename);
+        log("Added new map to Map Manager '%s'",maps[total_maps]->filename);
+        load_map(maps[total_maps]);
         total_maps++;
     }
-    void load_map(TileMap* map_to_load)
+    void reload_map(const char * filename)
     {
-        //--Loads the map's tilesets (If not already)
+        //--Reloads all data related to the map at filename
+        log("Reloading map '%s'",filename);
+        load_map(get_map(filename));
     }
     TileMap * get_map(const char * mapname)
     {
         //--Iterates over maps and returns the first TileMap with the name mapname
-        return maps[0];
+        int i = 0;
+        int result = strncmp(mapname,maps[i]->filename, 256);
+        if (result==0)
+        {
+            return maps[i];
+        }
+        while (result != 0)
+        {
+            i++;
+            if (i>=total_maps)
+            {
+                return NULL;
+            }
+            result = strncmp(mapname,maps[i]->filename, 256);
+        }
+        return maps[i-1];
     }
     void set_active_map(const char * mapname)
     {
         //--Switches maps to the map of name mapname
         //active_map = mapname;
-        ResetString(active_map,mapname);
+        TileMap* mapbuf = get_map(mapname);
+        if (!mapbuf)
+        {
+            log("Map '%s' does not exist. Could not set active.",mapname);
+            return;
+        }
+        active_map = mapbuf;
+        log("Set active map to '%s'",mapname);
         reset_camera();
     }
 
@@ -473,6 +503,7 @@ int main(int argc, char **argv)
 
     MapManager* mapmanager = new MapManager();
     mapmanager->add_map("data/levels/outside.tmx");
+    mapmanager->set_active_map("data/levels/outside.tmx");
     //TileMap *testmap = new TileMap("data/levels/outside.tmx");
 
     event_queue = al_create_event_queue();
