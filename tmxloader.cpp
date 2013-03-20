@@ -167,7 +167,7 @@ public:
 
         printf("  ");
         for (int x=0;x<width;x++)
-            printf("-");
+            printf("- ");
         printf("\n\n");
 
         for (int y=0;y<height;y++)
@@ -176,7 +176,7 @@ public:
             for (int x=0;x<width;x++)
             {
                 if (tiles[x][y] != 0)
-                    printf("%i",tiles[x][y]);
+                    printf("%i ",tiles[x][y]);
                 else
                     printf(" ");
             }
@@ -184,7 +184,7 @@ public:
         }
         printf("\n  ");
         for (int x=0;x<width;x++)
-            printf("-");
+            printf("- ");
         printf("\n");
     }
     /*
@@ -241,9 +241,8 @@ public:
         root->Attribute("tileheight",   &tileheight);
         fprintf(stderr, "\n");
 
-        /*fprintf(stderr, "Printing map\n");
+        fprintf(stderr, "Printing map\n");
         print();
-        printf("\n");*/
         fprintf(stderr, "Loading tilesets with load_tilesets()\n");
         load_tilesets(root);
         fprintf(stderr, "Loading layers with load_tilelayers()\n");
@@ -301,11 +300,11 @@ public:
             fprintf(stderr, "   Checking for next tileset element\n\n");
             r = r->NextSiblingElement("tileset");
         }
-        /*fprintf(stderr, "Printing tilesets\n");
+        fprintf(stderr, "Printing tilesets\n");
         for (int i=0;i<numtilesets;i++)
         {
             tilesets[i]->print();
-        }*/
+        }
         fprintf(stderr, "load_tilesets() complete\n");
         fprintf(stderr, "\n");
     }
@@ -335,13 +334,46 @@ public:
             fprintf(stderr, "   Checking for next layer element\n\n");
             r = r->NextSiblingElement("layer");
         }
-        /*fprintf(stderr, "Printing layers\n");
+        fprintf(stderr, "Printing layers\n");
         for (int i=0;i<numlayers;i++)
         {
             tilelayers[i]->print();
-        }*/
+        }
         fprintf(stderr, "load_tilelayers complete.\n");
         fprintf(stderr, "\n");
+    }
+
+    TileSet * get_tileset_for_id(int id)
+    {
+        fprintf(stderr, "\nSearching for tileset with tile ID %i\n", id);
+        int i = 0;
+        while (id > tilesets[i]->firstgid)
+        {
+            i++;
+            if (i+1>numtilesets)
+            {
+                fprintf(stderr, "Tile must be in the last tileset (Or past it)\n");
+                break;
+            }
+        }
+        //--If the tileset was NOT the last tileset.
+        if (i+1 != numtilesets)
+        {
+            i--;
+        }
+        fprintf(stderr, "ID found for tileset candidate %i ('%s')\n",i,tilesets[i]->name);
+        //--Figure out the number of tiles in the candidate
+        //--Do so by multiplying the width/tilewidth by the height/tileheight
+        int tilesincandidate =
+            (tilesets[i]->imgwidth/tilesets[i]->tilewidth)*(tilesets[i]->imgheight/tilesets[i]->tileheight);
+        fprintf(stderr,"There are %i tiles present in the candidate %i ('%s')\n",tilesincandidate,i,tilesets[i]->name);
+        if (id <= tilesincandidate+tilesets[i]->firstgid)
+        {
+            fprintf(stderr, "Found tileset that matches ID %i: %s\n",id,tilesets[i]->name);
+            return tilesets[i];
+        }
+        fprintf(stderr, "No tileset matches ID: %i. Returning NULL\n", id);
+        return NULL; // There is no such tileset.
     }
 
     void print()
@@ -349,5 +381,6 @@ public:
         const char * str = "------\nmap %s\n\ndimensions: (%i,%i) (tiles)\ntilesize: (%i,%i)\npixel dimensions: (%i,%i)\n%i layers\n%i tilesets\n------\n";
         //sizeof(array)/sizeof(array[0])
         printf(str, filename,width,height,tilewidth,tileheight,width*tilewidth,height*tileheight,numlayers,numtilesets);
+        printf("\n");
     }
 };
