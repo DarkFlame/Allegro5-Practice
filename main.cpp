@@ -415,6 +415,10 @@ public:
         log("Reloading map '%s'",filename);
         load_map(get_map(filename));
     }
+    TileMap * get_active_map()
+    {
+        return active_map;
+    }
     TileMap * get_map(const char * mapname)
     {
         //--Iterates over maps and returns the first TileMap with the name mapname
@@ -458,25 +462,33 @@ public:
         //--For each layer in the current map
         for (int layerindex=0;layerindex<active_map->numlayers;layerindex++)
         {
-            log("Iterating over a layer");
+            /*if (strncmp(active_map->tilelayers[layerindex]->name, "midground", 256) != 0)
+            {
+                break;
+            }*/
+            //log("Iterating over a layer");
             //--For each row in the current layer on the current map
             for (int y=0;y<active_map->tilelayers[layerindex]->height;y++)
             {
-                log("Starting y iteration");
+                //log("Starting y iteration");
                 for (int x=0;x<active_map->tilelayers[layerindex]->width;x++)
                 {
-                    log("Starting x iteration");
+                    //log("Starting x iteration");
                     //--ID is active_map->tilelayers[layerindex]->tiles[x][y]
                     TileLayer * tlbuf = active_map->tilelayers[layerindex];
-                    log("Got tilelayer %s",tlbuf->name);
-                    log("Getting tile at (%i,%i)",x,y);
+                    //log("Got tilelayer %s",tlbuf->name);
+                    //log("Getting tile at (%i,%i)",x,y);
                     int id = tlbuf->tiles[x][y];
-                    log("Getting id for %i",id);
+                    //log("Getting tileset for id %i",id);
                     TileSet * tsbuf = active_map->get_tileset_for_id(id);
-                    log("Got tileset %s",tsbuf->name);
+                    if (tsbuf == NULL)
+                    {
+                        break;
+                    }
+                    //log("Got tileset %s",tsbuf->name);
                     //--Get the location of the tile on the tileset image
                     int toffset = active_map->tilelayers[layerindex]->tiles[x][y] - tsbuf->firstgid;
-                    log("toffset is %i",toffset);
+                    //log("toffset is %i",toffset);
                     int sx,sy;
                     //--Wrap toffset on the x
                     if (toffset < tsbuf->imgwidth/tsbuf->tilewidth)
@@ -569,6 +581,7 @@ int main(int argc, char **argv)
     MapManager* mapmanager = new MapManager();
     mapmanager->add_map("data/levels/outside.tmx");
     mapmanager->set_active_map("data/levels/outside.tmx");
+    fprintf(stderr, "Tileset for ID %i is %s\n",19,mapmanager->get_active_map()->get_tileset_for_id(19)->name);
     //TileMap *testmap = new TileMap("data/levels/outside.tmx");
 
     event_queue = al_create_event_queue();
@@ -710,8 +723,8 @@ int main(int argc, char **argv)
 
             al_clear_to_color(al_map_rgb(50,50,50));
 
-            player->draw();
             mapmanager->draw();
+            player->draw();
 
             al_flip_display();
         }

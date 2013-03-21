@@ -436,9 +436,21 @@ public:
     TileSet * get_tileset_for_id(int id)
     {
         //log( "Searching for tileset with tile ID %i", id);
+        if (id==0) //0 is transparent. No tileset.
+        {
+            return NULL;
+        }
+        if (id==1)
+        {
+            return tilesets[0];
+        }
         int i = 0;
+        //log("Beginning search for tileset");
+        //log("Numtilesets %i",numtilesets);
+        //log("Tileset %i %s",i,tilesets[i]->name);
         while (id > tilesets[i]->firstgid)
         {
+            //log("Next tileset (%i)",i);
             i++;
             if (i+1>numtilesets)
             {
