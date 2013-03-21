@@ -154,7 +154,7 @@ int Entity::generate_bitmap()
     bitmap = al_create_bitmap(SPRITE_W, SPRITE_H);
     if (!bitmap) return -1;
     al_set_target_bitmap(bitmap);
-    al_clear_to_color(al_map_rgb(255, 0, 0));
+    al_clear_to_color(al_map_rgb(255, 255, 255));
     al_set_target_bitmap(al_get_backbuffer(display));
     return 0;
 };
@@ -295,11 +295,11 @@ void Entity::update(int mvkeys[4], bool key[4])
 
     //  Collision
     // Collide with bottom pixel of screen.
-    if (pos.y + curSpeed.y >= SCREEN_H-SPRITE_H)
+    if (pos.y + curSpeed.y >= SCREEN_H-SPRITE_H-192)
     {
         curSpeed.y = 0;
         targetSpeed.y = 0;
-        pos.y = SCREEN_H-SPRITE_H;
+        pos.y = SCREEN_H-SPRITE_H-192;
         grounded = true;
     }
     // Collide with edges of screen.
@@ -481,34 +481,42 @@ public:
                     int id = tlbuf->tiles[x][y];
                     //log("Getting tileset for id %i",id);
                     TileSet * tsbuf = active_map->get_tileset_for_id(id);
-                    if (tsbuf == NULL)
+                    /*if (tsbuf == NULL)
                     {
                         break;
-                    }
+                    }*/
                     //log("Got tileset %s",tsbuf->name);
                     //--Get the location of the tile on the tileset image
-                    int toffset = active_map->tilelayers[layerindex]->tiles[x][y] - tsbuf->firstgid;
-                    //log("toffset is %i",toffset);
-                    int sx,sy;
-                    //--Wrap toffset on the x
-                    if (toffset < tsbuf->imgwidth/tsbuf->tilewidth)
+                    if (tsbuf != NULL)
                     {
-                        //--It's in the first row, this is easy.
-                        sx = toffset*tsbuf->tilewidth;
-                        sy = 0;
-                    }
-                    else
-                    {
-                        int times = 0;
-                        while (toffset > tsbuf->imgwidth/tsbuf->tilewidth)
+                        int toffset = active_map->tilelayers[layerindex]->tiles[x][y] - tsbuf->firstgid;
+                        //log("toffset is %i",toffset);
+                        int sx,sy;
+                        //--Wrap toffset on the x
+                        if (toffset < tsbuf->imgwidth/tsbuf->tilewidth)
                         {
-                            toffset -= tsbuf->imgwidth/tsbuf->tilewidth;
-                            times++;
+                            //--It's in the first row, this is easy.
+                            sx = toffset*tsbuf->tilewidth;
+                            sy = 0;
                         }
-                        sx = toffset;
-                        sy = tsbuf->tileheight*times;
+                        else
+                        {
+                            int times = 0;
+                            int toffsetcopy = toffset;
+                            while (toffset > tsbuf->imgwidth/tsbuf->tilewidth)
+                            {
+                                toffset -= tsbuf->imgwidth/tsbuf->tilewidth;
+                                times++;
+                            }
+
+                            //log("toffset remainder %i",toffset);
+                            sx = tsbuf->tilewidth*(toffsetcopy-(times*tsbuf->imgwidth/tsbuf->tilewidth));
+                            sy = tsbuf->tileheight*times;
+                            //log("s (%i,%i)",sx,sy);
+                        }
+                        al_draw_bitmap_region(tsbuf->image, sx,sy, tsbuf->tilewidth,tsbuf->tileheight, x*active_map->tilewidth,y*active_map->tileheight, 0);
                     }
-                    al_draw_bitmap_region(tsbuf->image, sx,sy, tsbuf->tilewidth,tsbuf->tileheight, x*active_map->tilewidth,y*active_map->tileheight, 0);
+
                 }
             }
         }
@@ -581,7 +589,7 @@ int main(int argc, char **argv)
     MapManager* mapmanager = new MapManager();
     mapmanager->add_map("data/levels/outside.tmx");
     mapmanager->set_active_map("data/levels/outside.tmx");
-    fprintf(stderr, "Tileset for ID %i is %s\n",19,mapmanager->get_active_map()->get_tileset_for_id(19)->name);
+    //fprintf(stderr, "Tileset for ID %i is %s\n",52,mapmanager->get_active_map()->get_tileset_for_id(19)->name);
     //TileMap *testmap = new TileMap("data/levels/outside.tmx");
 
     event_queue = al_create_event_queue();

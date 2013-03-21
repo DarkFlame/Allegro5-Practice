@@ -130,6 +130,7 @@ public:
         {
             log("ERROR image file '%s' not found.",filename);
         }
+        al_convert_mask_to_alpha(image, colorkey);
     }
     void print()
     {
@@ -444,38 +445,41 @@ public:
         {
             return tilesets[0];
         }
+
+        //--Iterate over tilesets until id < firstgid
+        //    If it's the last tileset in the list, check the number of tiles and return it if it fits.
+        //    Otherwise, return NULL
+        //  decrement index by 1 and return
+
         int i = 0;
-        //log("Beginning search for tileset");
-        //log("Numtilesets %i",numtilesets);
-        //log("Tileset %i %s",i,tilesets[i]->name);
         while (id > tilesets[i]->firstgid)
         {
             //log("Next tileset (%i)",i);
             i++;
             if (i+1>numtilesets)
             {
-                //log( "Tile must be in the last tileset (Or past it)");
-                break;
+                //log("Last tileset");
+                i--;
+                //--Check to see if the tile ID fits on the tileset
+                int tilesinset =
+                    (tilesets[i]->imgwidth/tilesets[i]->tilewidth)*(tilesets[i]->imgheight/tilesets[i]->tileheight);
+
+                //log("%i tiles in set",tilesinset);
+                if (id <= tilesinset+tilesets[i]->firstgid)
+                {
+                    //log("In the last tileset. returning tileset %s",tilesets[i]->name);
+                    return tilesets[i];
+                }
+                else
+                {
+                    log("INVALID TILE ID. RETURNING NULL");
+                    return NULL;
+                }
             }
         }
-        //--If the tileset was NOT the last tileset.
-        if (i+1 != numtilesets)
-        {
-            i--;
-        }
-        //log( "ID found for tileset candidate %i ('%s')",i,tilesets[i]->name);
-        //--Figure out the number of tiles in the candidate
-        //--Do so by multiplying the width/tilewidth by the height/tileheight
-        int tilesincandidate =
-            (tilesets[i]->imgwidth/tilesets[i]->tilewidth)*(tilesets[i]->imgheight/tilesets[i]->tileheight);
-        //log("There are %i tiles present in the candidate %i ('%s')",tilesincandidate,i,tilesets[i]->name);
-        if (id <= tilesincandidate+tilesets[i]->firstgid)
-        {
-            //log( "Found tileset that matches ID %i: %s",id,tilesets[i]->name);
-            return tilesets[i];
-        }
-        log( "No tileset matches ID: %i. Returning NULL", id);
-        return NULL; // There is no such tileset.
+        i--;
+        //log("Tile %i found on tileset %s",id,tilesets[i]->name);
+        return tilesets[i];
     }
 
     void print()
