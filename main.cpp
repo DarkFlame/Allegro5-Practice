@@ -84,14 +84,22 @@ class Vector2f
     float lengthSquared(){return pow(x,2)+pow(y,2);};
 };
 
+
+typedef struct Camera
+{
+    int x,y;
+};
+
 class Entity
 {
 public:
     int width;
     int height;
-    Vector2f pos;
+    Vector2f pos; // virtual pos
+    Vector2f apos; //onscreen pos
     ALLEGRO_BITMAP *bitmap;
     ALLEGRO_DISPLAY *display;
+    Camera* camera;
 
     Vector2f targetSpeed;
     Vector2f curSpeed;
@@ -108,14 +116,22 @@ public:
     bool wallgrounded;
     bool moved;
 
-    void set_pos(int newx, int newy){pos.x = newx; pos.y = newy;}
-    void set_pos(Vector2f newpos){pos=newpos;}
+    void set_pos(int newx, int newy)
+    {
+        pos.x = newx; pos.y = newy;
+        apos.x = newx; apos.y = newy;
+    }
+    void set_pos(Vector2f newpos)
+    {
+        pos=newpos;
+        apos=newpos;
+    }
 
     ~Entity()
     {
         al_destroy_bitmap(bitmap);
     };
-    void init(ALLEGRO_DISPLAY *disp, const int x, const int y);
+    void init(ALLEGRO_DISPLAY *disp, Camera* cam, const int x, const int y);
     int generate_bitmap();
     void calculate_movement();
     void update(int mvkeys[2], bool key[4]);
@@ -123,11 +139,13 @@ public:
     void draw();
 };
 
-void Entity::init(ALLEGRO_DISPLAY *disp, const int x, const int y)
+void Entity::init(ALLEGRO_DISPLAY *disp, Camera* cam, const int x, const int y)
 {
     display = disp;
 
     pos = Vector2f(0.0f,0.0f);
+    apos = pos;
+    camera = cam;
 
     targetSpeed = Vector2f(0.0f,0.0f);
     curSpeed = Vector2f(0.0f,0.0f);
@@ -318,22 +336,20 @@ void Entity::update(int mvkeys[4], bool key[4])
 
     // Finally adjust position for drawing.
     pos = pos + curSpeed;
+    //camera->x = pos.x; camera->y = pos.y;
+    camera->x = camera->x+curSpeed.x;
+    camera->y = camera->y+curSpeed.y;
 };
 void Entity::draw()
 {
-    al_draw_bitmap(bitmap, pos.x, pos.y, 0);
+    al_draw_bitmap(bitmap, apos.x, apos.y, 0);
 };
 
-
-struct Camera
-{
-    int x,y;
-};
 
 class MapManager
 {
 private:
-    Camera camera;
+    Camera* camera;
     TileMap * maps[64]; //Static array. REALLOC IF NEEDED
     int total_maps;
     TileSet * tilesets[256]; //Static array. REALLOC IF NEEDED
@@ -362,8 +378,10 @@ private:
     }
 
 public:
-    MapManager()
+    MapManager(Camera * cam)
     {
+        camera = cam;
+
         //--Constructor
         for (int i=0;i<63;i++)
         {
@@ -375,7 +393,6 @@ public:
         }
         total_maps = 0;
         total_tilesets = 0;
-        reset_camera();
     }
     ~MapManager()
     {
@@ -394,12 +411,17 @@ public:
         log("Destructor completed");
     }
 
+    void set_camera(Camera* cam)
+    {
+        camera = cam;
+    }
     void reset_camera(int x=0, int y=0)
     {
         //--Resets the camera to position x,y
         log("Reset the camera to (%i,%i)",x,y);
-        camera.x=x;
-        camera.y=y;
+        camera->x=x;
+        camera->y=y;
+            fprintf(stderr, "FOOBAR\n");
     }
     void add_map(const char * filename)
     {
@@ -458,7 +480,6 @@ public:
     {
         //--Draws the active map to target
         //--DRAWING THE TILESET FOR PLACEHOLDER
-        al_draw_bitmap(active_map->tilesets[0]->image,0,0,0);
         //--For each layer in the current map
         for (int layerindex=0;layerindex<active_map->numlayers;layerindex++)
         {
@@ -503,7 +524,7 @@ public:
                         {
                             int times = 0;
                             int toffsetcopy = toffset;
-                            while (toffset > tsbuf->imgwidth/tsbuf->tilewidth)
+                            while (toffset >= tsbuf->imgwidth/tsbuf->tilewidth)
                             {
                                 toffset -= tsbuf->imgwidth/tsbuf->tilewidth;
                                 times++;
@@ -514,7 +535,9 @@ public:
                             sy = tsbuf->tileheight*times;
                             //log("s (%i,%i)",sx,sy);
                         }
-                        al_draw_bitmap_region(tsbuf->image, sx,sy, tsbuf->tilewidth,tsbuf->tileheight, x*active_map->tilewidth,y*active_map->tileheight, 0);
+                        int dx = x*active_map->tilewidth+-camera->x;
+                        int dy = y*active_map->tileheight+-camera->y;
+                        al_draw_bitmap_region(tsbuf->image, sx,sy, tsbuf->tilewidth,tsbuf->tileheight, dx,dy, 0);
                     }
 
                 }
@@ -580,13 +603,16 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    //--Create a camera object for everything to use
+    fprintf(stderr, "Creating camera\n");
+    Camera* camera = new Camera();
     //--Initialize player entity
-    player->init(display,sprite_x,sprite_y);
+    player->init(display,camera,sprite_x,sprite_y);
     //player.init(display,sprite_x,sprite_y);
     if (player->generate_bitmap() == -1) return -1;
     player->set_pos(SCREEN_W/2.0-SPRITE_W/2.0,SCREEN_H/2.0-SPRITE_H/2.0);
 
-    MapManager* mapmanager = new MapManager();
+    MapManager* mapmanager = new MapManager(camera);
     mapmanager->add_map("data/levels/outside.tmx");
     mapmanager->set_active_map("data/levels/outside.tmx");
     //fprintf(stderr, "Tileset for ID %i is %s\n",52,mapmanager->get_active_map()->get_tileset_for_id(19)->name);
@@ -597,6 +623,7 @@ int main(int argc, char **argv)
     {
         fprintf(stderr, "failed to create event_queue!\n");
         delete player;
+        delete mapmanager;
         al_destroy_display(display);
         al_destroy_timer(timer);
         return -1;
