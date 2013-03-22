@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "Common.h"
 
 void ResetString(char *&sString, const char *pNewString)
@@ -16,3 +18,48 @@ void ResetString(char *&sString, const char *pNewString)
     sString = (char *)malloc(sizeof(char) * (strlen(pNewString) + 1));
     strcpy(sString, pNewString);
 }
+
+Vector2f::Vector2f()
+{
+    x = 0;
+    y = 0;
+};
+Vector2f::Vector2f(float nx, float ny)
+{
+    x = nx;
+    y = ny;
+};
+
+Vector2f Vector2f::operator*(Vector2f param)
+{
+    return Vector2f(x*param.x, y*param.y);
+};
+Vector2f Vector2f::operator/(Vector2f param)
+{
+    return Vector2f(x/param.x, y/param.y);
+};
+Vector2f Vector2f::operator+(Vector2f param)
+{
+    return Vector2f(x+param.x, y+param.y);
+};
+Vector2f Vector2f::operator-(Vector2f param)
+{
+    return Vector2f(x-param.x, y-param.y);
+};
+void Vector2f::operator+=(Vector2f param)
+{
+    x = x + param.x;
+    y = y + param.y;
+};
+void Vector2f::operator-=(Vector2f param)
+{
+    x = x - param.x;
+    y = y - param.y;
+};
+
+float Vector2f::angle(Vector2f other)
+{
+    return atan2(x-other.x, y-other.y);
+};
+float Vector2f::length(){return sqrt(pow(x,2)+pow(y,2));};
+float Vector2f::lengthSquared(){return pow(x,2)+pow(y,2);};
