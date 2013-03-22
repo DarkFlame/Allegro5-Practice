@@ -236,22 +236,6 @@ for (int x=0;x<width;x++){
 free(tiles);
 */
 
-
-void TileLayer::TileMap::log(const char* instring, ...)
-{
-    //--Logs instring to stderr with some default formatting
-    char buffer[256];
-
-    fprintf(stderr,"[TileMap] ");
-
-    va_list args;
-    va_start (args, instring);
-    vsprintf(buffer, instring, args);
-    fprintf(stderr,buffer);
-    va_end (args);
-    fprintf(stderr,"\n");
-}
-
 // Reads the file in question into TinyXML DOM format
 TileLayer::TileMap(const char * fname)
 {

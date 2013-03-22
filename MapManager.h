@@ -1,17 +1,7 @@
 #ifndef _MAPMANAGER_H_
 #define _MAPMANAGER_H_
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <cmath>
-#include "allegro5/allegro.h"
-
-#include "TileSet.h"
-#include "TileLayer.h"
-#include "TileMap.h"
-#include "Entity.h"
-#include "Structures.h"
-#include "Common.h"
+#include "Definitions.h"
 
 class MapManager
 {
@@ -25,6 +15,7 @@ private:
     Entity * player;
 
     void log(const char* instring, ...);
+    void load_map(TileMap* map_to_load);
 
 public:
     MapManager(Camera * cam, Entity * plyer);
@@ -33,7 +24,7 @@ public:
     void bound_camera();
 
     void set_camera(Camera* cam);
-    void reset_camera(int x=0, int y=0);
+    void reset_camera(int x, int y);
     void add_map(const char * filename);
     void reload_map(const char * filename);
     TileMap * get_active_map();

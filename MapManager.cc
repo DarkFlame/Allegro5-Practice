@@ -1,5 +1,12 @@
 #include "mapmanager.h"
 
+#include "TileSet.h"
+#include "TileLayer.h"
+#include "TileMap.h"
+#include "Entity.h"
+#include "Structures.h"
+#include "Common.h"
+
 void MapManager::log(const char* instring, ...)
 {
     //--Logs instring to stderr with some default formatting
@@ -269,4 +276,3 @@ void MapManager::update()
     //camera->y = camera->y+player->curSpeed.y;
     bound_camera();
 }
-};

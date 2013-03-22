@@ -1,19 +1,9 @@
 #ifndef _TILESET_H_
 #define _TILESET_H_
 
-#include <stdio.h>
-#include <allegro5/allegro.h>
-#include <allegro5/allegro_color.h>
-#include <allegro5/allegro_image.h>
-#include "tinyxml.h"
-#include "tinystr.h"
-#include <stdlib.h>
-#include <stdarg.h>
-#include <zlib.h>
+#include "Definitions.h"
 
-#include "Common.h"
-#include "TileLayer.h"
-#include "TileMap.h"
+struct StringHolder;
 
 class TileSet
 {
@@ -40,7 +30,7 @@ public:
 
     TileSet(TiXmlElement* element);
     ~TileSet();
-    char* trim_filename(const char * filename);
+    StringHolder trim_filename(const char * filename);
     void load_image(const char * filename);
     void print();
 };

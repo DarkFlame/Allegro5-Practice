@@ -11,3 +11,6 @@ obj/*
 # Platform specific filetypes
 Allegro5-Practice.depend
 Allegro5-Practice.layout
+
+# Compiled executables
+*.exe

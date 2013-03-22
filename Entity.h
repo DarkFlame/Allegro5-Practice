@@ -45,12 +45,12 @@ public:
     void set_pos(Vector2f newpos);
 
     ~Entity();
-    void init(ALLEGRO_DISPLAY *disp, Camera* cam, const int x, const int y);
+    void init(ALLEGRO_DISPLAY *disp, Camera* cam);
     void set_mapmanager(MapManager *mapman);
     void load_image();
     int generate_bitmap();
     void calculate_movement();
-    void update(int mvkeys[2], bool key[4]);
+    void update(int mvkeys[2]);
     void updatealt(int mvkeys[4], bool key[4]);
     void draw();
 };

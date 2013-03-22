@@ -1,6 +1,7 @@
 #include "Entity.h"
+#include "Structures.h"
 
-void Entity::init(ALLEGRO_DISPLAY *disp, Camera* cam, const int x, const int y)
+void Entity::init(ALLEGRO_DISPLAY *disp, Camera* cam)
 {
     display = disp;
     moved = false;
@@ -31,6 +32,10 @@ void Entity::init(ALLEGRO_DISPLAY *disp, Camera* cam, const int x, const int y)
 
     //load_image();
     generate_bitmap();
+}
+Entity::~Entity()
+{
+
 }
 
 void Entity::set_mapmanager(MapManager *mapman)
@@ -141,7 +146,7 @@ void Entity::updatealt(int mvkeys[2], bool key[4])
     }
     else wallgrounded = false;
 }
-void Entity::update(int mvkeys[4], bool key[4])
+void Entity::update(int mvkeys[4])
 {
     //  Step X axis
     if (mvkeys[0] == ALLEGRO_KEY_RIGHT)
@@ -195,8 +200,9 @@ void Entity::update(int mvkeys[4], bool key[4])
     calculate_movement();
 
     //  Collision
-    if (moved)
+    if (curSpeed.x!=0 || curSpeed.y!=0)
     {
+        fprintf(stderr, "Checking for collision. XDirection:%f\n",direction.x);
         TileMap *active_map = mapmanager->get_active_map();
         //--Get the sprite's pos+speed / tilesize
 
@@ -204,7 +210,7 @@ void Entity::update(int mvkeys[4], bool key[4])
         //  pos.x+curSpeed.x)/active_map->tilewidth
         //  pos.y+curSpeed.y)/active_map->tileheight
 
-        //--Cheack each corner of the sprite
+        //--Cheack each side of the sprite
         //--Check forward-facing side (X)
         if (direction.x < 0)
         {
@@ -217,14 +223,9 @@ void Entity::update(int mvkeys[4], bool key[4])
                 //--Iterate over each row and see if we collide.
                 char layername[256] = {0};
                 int i = 0;
-                while (strncmp(layername,"midground",256) != 0)
-                {
-                    strncpy(layername, active_map->tilelayers[i]->name, 256);
-                    layername[strlen(active_map->tilelayers[i]->name)+1] = 0;
-                    //layername = active_map->tilelayers[i]->name;
-                    i++;
-                }
-                TileLayer *layer = active_map->tilelayers[i];
+
+                currow++;
+                TileLayer *layer = active_map->get_layer_for_name("midground");
 
 
             }
@@ -250,7 +251,9 @@ void Entity::update(int mvkeys[4], bool key[4])
             int hicolumn = (pos.x+curSpeed.x+SPRITE_W)/active_map->tilewidth;
         }
 
+        //======================================
         //--Collide with bottom pixel of screen.
+        //======================================
         if (pos.y + curSpeed.y >= SCREEN_H-SPRITE_H)
         //if (pos.y + curSpeed.y >= 24*32)
         {
@@ -317,4 +320,10 @@ void Entity::draw()
     {
         al_draw_bitmap(bitmap, apos.x, apos.y, 0);
     }
+}
+
+void Entity::set_pos(int newx, int newy)
+{
+    pos.x = newx;
+    pos.y = newy;
 }

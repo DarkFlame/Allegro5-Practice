@@ -1,4 +1,8 @@
 #include "TileLayer.h"
+#include "TileMap.h"
+
+#include "Common.h"
+#include "TileSet.h"
 
 void TileLayer::log(const char* instring, ...)
 {

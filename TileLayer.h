@@ -1,19 +1,7 @@
 #ifndef _TILELAYER_H_
 #define _TILELAYER_H_
 
-#include <stdio.h>
-#include <allegro5/allegro.h>
-#include <allegro5/allegro_color.h>
-#include <allegro5/allegro_image.h>
-#include "tinyxml.h"
-#include "tinystr.h"
-#include <stdlib.h>
-#include <stdarg.h>
-#include <zlib.h>
-
-#include "Common.h"
-#include "TileSet.h"
-#include "TileMap.h"
+#include "Definitions.h"
 
 class TileLayer
 {
