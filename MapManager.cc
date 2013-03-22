@@ -1,4 +1,4 @@
-#include "mapmanager.h"
+#include "MapManager.h"
 
 #include "TileSet.h"
 #include "TileLayer.h"

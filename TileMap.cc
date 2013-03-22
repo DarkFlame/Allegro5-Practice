@@ -136,7 +136,7 @@ void TileMap::load_tilelayers(TiXmlElement *root)
 
 TileLayer * TileMap::get_layer_for_name(char *name)
 {
-    log("Searching for layer '%s'",name);
+    //log("Searching for layer '%s'",name);
     char layername[256] = {0};
     int i = 0;
     while (strncmp(layername,name,256) != 0)
@@ -152,7 +152,7 @@ TileLayer * TileMap::get_layer_for_name(char *name)
         }
     }
     i--;
-    log("Found layer '%s'. Returning", tilelayers[i]->name);
+    //log("Found layer '%s'. Returning", tilelayers[i]->name);
     return tilelayers[i];
 }
 
