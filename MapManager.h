@@ -24,7 +24,7 @@ public:
     void bound_camera();
 
     void set_camera(Camera* cam);
-    void reset_camera(int x=0, int y=0);
+    void reset_camera(int x, int y);
     void add_map(const char * filename);
     void reload_map(const char * filename);
     TileMap * get_active_map();

@@ -42,6 +42,8 @@ public:
 
     void load_tilelayers(TiXmlElement *root);
 
+    TileLayer * get_layer_for_name(char * name);
+
     TileSet * get_tileset_for_id(int id);
 
     void print();

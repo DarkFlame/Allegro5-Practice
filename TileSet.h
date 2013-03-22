@@ -3,6 +3,8 @@
 
 #include "Definitions.h"
 
+struct StringHolder;
+
 class TileSet
 {
 private:
@@ -28,7 +30,7 @@ public:
 
     TileSet(TiXmlElement* element);
     ~TileSet();
-    char* trim_filename(const char * filename);
+    StringHolder trim_filename(const char * filename);
     void load_image(const char * filename);
     void print();
 };

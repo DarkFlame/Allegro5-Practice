@@ -3,6 +3,10 @@
 #include "Common.h"
 #include "TileLayer.h"
 #include "TileMap.h"
+struct StringHolder
+{
+    char str[256];
+};
 
 void TileSet::log(const char* instring, ...)
 {
@@ -34,7 +38,7 @@ TileSet::TileSet(TiXmlElement* element)
     log("Getting image element");
     TiXmlElement * imageelem = element->FirstChildElement("image");
     //image_source = {0};
-    strncpy(image_source, trim_filename(imageelem->Attribute("source")),256);
+    strncpy(image_source, (trim_filename(imageelem->Attribute("source")).str),256);
     log("Found image source: '%s'",image_source);
     imageelem->Attribute("width",&imgwidth);
     imageelem->Attribute("height", &imgheight);
@@ -51,7 +55,7 @@ TileSet::~TileSet()
     log( "Deleting TileSet");
     //delete image;
 }
-char* TileSet::trim_filename(const char * filename)
+StringHolder TileSet::trim_filename(const char * filename)
 {
     char fnamebuf[256] = {0};
     char fnamecpy[256] = {0};
@@ -67,7 +71,9 @@ char* TileSet::trim_filename(const char * filename)
     strncpy(&fnamebuf[strlen(datastring)],fnamecpy,256);
     fnamebuf[strlen(fnamebuf)-2] = 0; // For some reason it duplicates the last two characters, so here's a hack for that. TODO
     log("Altering filename from '%s' to '%s'",filename,fnamebuf);
-    return fnamebuf;
+    StringHolder str;
+    strcpy(str.str, fnamebuf);
+    return str;
 }
 void TileSet::load_image(const char * filename)
 {

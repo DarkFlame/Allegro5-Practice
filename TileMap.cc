@@ -134,6 +134,28 @@ void TileMap::load_tilelayers(TiXmlElement *root)
     log( "\n");
 }
 
+TileLayer * TileMap::get_layer_for_name(char *name)
+{
+    log("Searching for layer '%s'",name);
+    char layername[256] = {0};
+    int i = 0;
+    while (strncmp(layername,name,256) != 0)
+    {
+        strncpy(layername, tilelayers[i]->name, 256);
+        layername[strlen(tilelayers[i]->name)+1] = 0;
+        //layername = tilelayers[i]->name;
+        i++;
+        if (i>numlayers)
+        {
+            log("LAYER NOT FOUND '%s'",name);
+            return;
+        }
+    }
+    i--;
+    log("Found layer '%s'. Returning", tilelayers[i]->name);
+    return tilelayers[i];
+}
+
 TileSet * TileMap::get_tileset_for_id(int id)
 {
     //log( "Searching for tileset with tile ID %i", id);

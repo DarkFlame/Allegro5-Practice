@@ -20,7 +20,8 @@
 //  Camera movement
 
 
-int main(int argc, char **argv)
+//int main(int argc, char **argv)
+int main(int, char **)
 {
     ALLEGRO_DISPLAY *display = NULL;
     ALLEGRO_EVENT_QUEUE *event_queue = NULL;
@@ -28,9 +29,7 @@ int main(int argc, char **argv)
 
     Entity *player = new Entity();
 
-    float sprite_x = SCREEN_W / 2.0 - SPRITE_W / 2.0;
-    float sprite_y = SCREEN_H / 2.0 - SPRITE_H / 2.0;
-    bool key[4] = { false, false, false, false };
+    //bool key[4] = { false, false, false, false };
     int mvkeys[2] = { 0, 0 };
 
     bool redraw = true;
@@ -75,7 +74,7 @@ int main(int argc, char **argv)
     fprintf(stderr, "Creating camera\n");
     Camera* camera = new Camera();
     //--Initialize player entity
-    player->init(display,camera,sprite_x,sprite_y);
+    player->init(display,camera);
     //player.init(display,sprite_x,sprite_y);
     //if (player->generate_bitmap() == -1) return -1;
     player->set_pos(SCREEN_W/2.0-SPRITE_W/2.0,SCREEN_H/2.0-SPRITE_H/2.0);
@@ -118,7 +117,7 @@ int main(int argc, char **argv)
         if(ev.type == ALLEGRO_EVENT_TIMER)
         {
             mapmanager->update();
-            player->update(mvkeys, key);
+            player->update(mvkeys);
             //player->updatealt(mvkeys, key);
 
             redraw = true;
@@ -134,17 +133,17 @@ int main(int argc, char **argv)
             switch(ev.keyboard.keycode)
             {
                 case ALLEGRO_KEY_UP:
-                    key[KEY_UP] = true;
+                    //key[KEY_UP] = true;
                     mvkeys[3] = 1;
                     break;
 
                 case ALLEGRO_KEY_DOWN:
-                    key[KEY_DOWN] = true;
+                    //key[KEY_DOWN] = true;
                     mvkeys[4] = 1;
                     break;
 
                 case ALLEGRO_KEY_LEFT:
-                    key[KEY_LEFT] = true;
+                    //key[KEY_LEFT] = true;
                     if (!mvkeys[0])
                     {
                         mvkeys[0] = ALLEGRO_KEY_LEFT;
@@ -158,7 +157,7 @@ int main(int argc, char **argv)
                     break;
 
                 case ALLEGRO_KEY_RIGHT:
-                    key[KEY_RIGHT] = true;
+                    //key[KEY_RIGHT] = true;
                     if (!mvkeys[0])
                     {
                         mvkeys[0] = ALLEGRO_KEY_RIGHT;
@@ -177,17 +176,17 @@ int main(int argc, char **argv)
             switch(ev.keyboard.keycode)
             {
                 case ALLEGRO_KEY_UP:
-                    key[KEY_UP] = false;
+                    //key[KEY_UP] = false;
                     mvkeys[3] = 0;
                     break;
 
                 case ALLEGRO_KEY_DOWN:
-                    key[KEY_DOWN] = false;
+                    //key[KEY_DOWN] = false;
                     mvkeys[4] = 0;
                     break;
 
                 case ALLEGRO_KEY_LEFT:
-                    key[KEY_LEFT] = false;
+                    //key[KEY_LEFT] = false;
                     if (mvkeys[0] == ALLEGRO_KEY_LEFT)
                     {
                         mvkeys[0] = mvkeys[1];
@@ -200,7 +199,7 @@ int main(int argc, char **argv)
                     break;
 
                 case ALLEGRO_KEY_RIGHT:
-                    key[KEY_RIGHT] = false;
+                    //key[KEY_RIGHT] = false;
                     if (mvkeys[0] == ALLEGRO_KEY_RIGHT)
                     {
                         mvkeys[0] = mvkeys[1];
