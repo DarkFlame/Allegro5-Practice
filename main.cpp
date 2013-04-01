@@ -80,9 +80,9 @@ int main(int, char **)
     player->set_pos(SCREEN_W/2.0-SPRITE_W/2.0,SCREEN_H/2.0-SPRITE_H/2.0);
 
     MapManager* mapmanager = new MapManager(camera, player);
-    mapmanager->add_map("data/levels/outside.tmx");
-    mapmanager->set_active_map("data/levels/outside.tmx");
-    mapmanager->reset_camera(0,64);
+    mapmanager->add_map("data/levels/testmap.tmx");
+    mapmanager->set_active_map("data/levels/testmap.tmx");
+    //mapmanager->reset_camera(0,64);
     player->set_mapmanager(mapmanager);
     //fprintf(stderr, "Tileset for ID %i is %s\n",52,mapmanager->get_active_map()->get_tileset_for_id(19)->name);
     //TileMap *testmap = new TileMap("data/levels/outside.tmx");
