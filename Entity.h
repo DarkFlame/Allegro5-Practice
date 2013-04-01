@@ -24,6 +24,8 @@ public:
     ALLEGRO_DISPLAY *display;
     Camera* camera;
     MapManager *mapmanager;
+    TileMap* active_map;
+    TileLayer* collide_layer;
     int imgdir;
     bool moved;
 
@@ -50,6 +52,7 @@ public:
     void load_image();
     int generate_bitmap();
     void calculate_movement();
+    bool get_clip_at(int x, int y);
     void update(int mvkeys[2]);
     void updatealt(int mvkeys[4], bool key[4]);
     void draw();

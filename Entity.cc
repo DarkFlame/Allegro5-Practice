@@ -41,6 +41,8 @@ Entity::~Entity()
 void Entity::set_mapmanager(MapManager *mapman)
 {
     mapmanager = mapman;
+    active_map = mapmanager->get_active_map();
+    collide_layer = active_map->get_layer_for_name("midground");
 }
 
 void Entity::load_image()
@@ -146,8 +148,159 @@ void Entity::updatealt(int mvkeys[2], bool key[4])
     }
     else wallgrounded = false;
 }
+bool Entity::get_clip_at(int x, int y)
+{
+
+}
 void Entity::update(int mvkeys[4])
 {
+    TileMap* active_map = mapmanager->get_active_map();
+    //--Update function--
+    //--Steps X axis, then Y axis after.
+    //--Takes keyboard input for both axes and responds accordingly.
+
+    //--First step X axis--
+    //--Get the input for left and right keys and set the target speed accordingly
+    //--If there is input, then set moved to true
+    if (mvkeys[0] == ALLEGRO_KEY_RIGHT)
+    {
+        targetSpeed.x = +maxSpeed;
+        imgdir = 1; //--To flip the image for movement
+        moved = true;
+    }
+    else if (mvkeys[0] == ALLEGRO_KEY_LEFT)
+    {
+        targetSpeed.x = -maxSpeed;
+        imgdir = -1;
+        moved = true;
+    }
+    else
+    {
+        //--No button pressed, slow down (Or stop if no accel)
+        targetSpeed.x = 0;
+        moved = false;
+    }
+
+    //--Collision--
+    //--Check if the player has moved. If not, then skip the rest.
+    //--Get the leading edge on the X axis
+    //--Iterate through all the horizontal rows of tiles that the bounding box intersects with
+    //--Find the closest obstacle in that direction
+    //--If the distance between the pos and the closest obstacle is less than the distance between the pos and the pos+Xspeed
+    //  then set the pos to the closest obstacle. Otherwise, set it to pos+Xspeed.
+
+    if (moved) //--TODO Make a better check here
+    {
+        int leadingx;
+        //--Get the leading edge
+        if (targetSpeed.x < 0)
+        {
+            //--Moving left. Left edge is leading
+            leadingx = pos.x;
+        }
+        else if (targetSpeed.x > 0)
+        {
+            //--Moving right. RIght edge is leading
+            leadingx = pos.x+SPRITE_W;
+        }
+
+        //--Get the index of the top tile that the player intersects with
+        //--Get the collision layer from the map
+        TileLayer* layer = active_map->get_layer_for_name("midground");
+        //--The Y coordinate of the player's top divided by the height of the tiles will return an int of the top tile
+        int toptilei = pos.y/active_map->tileheight; //  (fraction is dropped in int division)
+        int rowstoiter = SPRITE_H/active_map->tileheight+1; //  How many rows to iterate over, based on the height of the player divided by the tile height
+        int closestobst = NULL;
+        for (int y=toptilei; y<toptilei+rowstoiter;y++)
+        {
+            //--This is a single iteration of the Y rows. Now iterate over the X
+            //--Find the closest obstacle in this row
+            int x = leadingx/active_map->tilewidth;
+            while (layer->tiles[x][y] != 0)
+            {
+                if (x<0||x>active_map->width)
+                {
+                    //--Hit the edge of the map with no obstacles in this row.
+                    break;
+                }
+                x++;
+            }
+            fprintf(stderr, "Found an obstacle in row %i at x %i\n",y,x);
+
+            //--Figure out if this obstacle is closer than the previous one already found.
+            //--x is the left side of the nearest obstacle in this row.
+            if (targetSpeed.x < 0)
+            {
+                //--Check to see if x is farther right than the previous closestobst
+                if (x > closestobst)
+                {
+                    closestobst = x;
+                }
+            }
+            else if (targetSpeed.x > 0)
+            {
+                //--Check to see if x is farther left than the previous closestobst
+                if (x < closestobst)
+                {
+                    closestobst = x;
+                }
+            }
+
+            //--Check to see if targetSpeed.x will overshoot past closestobst.
+            //--If so, set targetSpeed.x to 0 and pos.x to closestobst+active_map->tilewidth (If going right, omit the tilewidth addition)
+            //--If not, calculate curSpeed.x from targetSpeed.x and add curSpeed.x to pos.x
+            bool overshot = false;
+            if (targetSpeed.x < 0)
+            {
+                if (targetSpeed.x+pos.x < closestobst+active_map->tilewidth)
+                {
+                    targetSpeed.x = 0;
+                    pos.x = closestobst+active_map->tilewidth;
+                }
+            }
+            else if (targetSpeed.x > 0)
+            {
+                if (targetSpeed.x+pos.x > closestobst)
+                {
+                    targetSpeed.x = 0;
+                    pos.x = closestobst;
+                }
+            }
+        }
+
+        //--Collision has been checked. Now calculate curSpeed.x and step pos.x accordingly.
+        //--Remember, if we collided, then targetSpeed.x has been reset to 0, so curSpeed.x will also be set to 0
+        calculate_movement();
+        pos.x = pos.x + curSpeed.x;
+        pos.y = pos.y + curSpeed.y;
+    }
+
+    //--Example--
+    //   0 1 2 3 4 5 6 7 8 9
+    //  0[][][][][][][][][][]
+    //  1[][][][][]    p
+    //  2[][][][][]    l
+    //  3[][][][][][]  r
+    //  4[][][][][][][][][][]
+
+    //--Explanation--
+    //--If plr is player and is moving left, then get the Xcoordinate of the left side of plr first
+    //--Then figure out that plr intersects with rows 1,2, and 3 (But not 0 or 4). Iterate through rows 1,2, and 3
+    //  and check to see if the tile is an obstacle. Start from the player's leading edge and work in the direction
+    //  of movement.
+    //--As soon as an obstacle is found, move to the next row
+    //--Once the row iteration is complete, Check to see which row has the closest obstacle (row 3 in this case). If they are all the same distance,
+    //  just pick the first one or something
+    //--Check the speed+pos against the obstacle's coordinate. Whichever one is closer to the (UNMODIFIED) pos,
+    //  set pos.x to that coordinate.
+
+
+    //--Then do the same for the Y axis--
+
+    ////////////////
+    //==OLD CODE==//
+    ////////////////
+    /*
     //  Step X axis
     if (mvkeys[0] == ALLEGRO_KEY_RIGHT)
     {
@@ -197,9 +350,11 @@ void Entity::update(int mvkeys[4])
         }
     }
 
+    //--Calculate the speed (For acceleration)
     calculate_movement();
 
     //  Collision
+    //--Check for movement first
     if (curSpeed.x!=0 || curSpeed.y!=0)
     {
         //fprintf(stderr, "Checking for collision. XDirection:%f\n",direction.x);
@@ -315,7 +470,7 @@ void Entity::update(int mvkeys[4])
                             targetSpeed.y = 0;
                         }
 
-                        /*fprintf(stderr, "non-empty block at y %i,%i\n",ycheck,curcol);
+                        fprintf(stderr, "non-empty block at y %i,%i\n",ycheck,curcol);
                         //--Found a non-empty block. Must be solid. Check collide.
                         fprintf(stderr, "%f  >  %i  ?\n",pos.y+curSpeed.y+SPRITE_H,ycheck*active_map->tileheight);
                         if (pos.y+curSpeed.y+SPRITE_H > ycheck*active_map->tileheight)
@@ -336,7 +491,7 @@ void Entity::update(int mvkeys[4])
                             fprintf(stderr, "no\n");
                             //--The first block is too far away. Stop checking in this direction
                             break;
-                        }*/
+                        }
                     }
 
                     ycheck++;
@@ -409,6 +564,7 @@ void Entity::update(int mvkeys[4])
     apos.y = pos.y+camera->y;
     //apos = pos;
     //camera->x = pos.x; camera->y = pos.y;
+    */
 }
 void Entity::draw()
 {
